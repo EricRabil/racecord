@@ -1,0 +1,27 @@
+{
+  "name": "racecord",
+  "version": "0.0.1",
+  "description": "Extremely durable and fast Discord library",
+  "main": "lib/index.js",
+  "repository": "https://github.com/EricRabil/racecord.git",
+  "author": "Eric Rabil <ericjrabil@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/flux": "^3.1.6",
+    "@types/keymirror": "^0.1.1",
+    "@types/superagent": "^3.5.7",
+    "declaration-bundler-webpack-plugin": "^1.0.3",
+    "dts-generator-webpack-plugin": "^1.0.0",
+    "source-map-loader": "^0.2.3",
+    "ts-loader": "^3.4.0",
+    "tsconfig-paths-webpack-plugin": "^2.0.0",
+    "typescript": "^2.7.1",
+    "uglifyjs-webpack-plugin": "^1.1.8",
+    "webpack": "^3.10.0"
+  },
+  "dependencies": {
+    "flux": "^3.1.3",
+    "keymirror": "^0.1.1",
+    "superagent": "^3.8.2"
+  }
+}

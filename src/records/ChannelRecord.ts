@@ -8,6 +8,7 @@ import { SendableMessage } from "../types/discord/channel/message";
 import { createNonce } from "../util/MiscUtils";
 import { MessageStore } from "../stores/index";
 import { MessageRecord } from "./MessageRecord";
+import { deleteChannel } from "../util/rest/actions/ChannelActions";
 
 export class ChannelRecord extends Record implements RawChannel {
 
@@ -34,6 +35,10 @@ export class ChannelRecord extends Record implements RawChannel {
         this.assign(data);
         this.readonly("id", this.id);
         this.readonly("type", this.type);
+    }
+
+    public deleteChannel(): Promise<void> {
+        return deleteChannel(this);
     }
     
 }

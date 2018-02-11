@@ -1,0 +1,21 @@
+export const OPCODE_DISPATCH = 0;
+export const OPCODE_HEARTBEAT = 1;
+export const OPCODE_IDENTIFY = 2;
+export const OPCODE_PRESENCE_UPDATE = 3;
+export const OPCODE_VOICE_STATE_UPDATE = 4;
+export const OPCODE_VOICE_SERVER_PING = 5;
+export const OPCODE_RESUME = 6;
+export const OPCODE_RECONNECT = 7;
+export const OPCODE_REQUEST_GUILD_MEMBERS = 8;
+export const OPCODE_INVALID_SESSION = 9;
+export const OPCODE_HELLO = 10;
+export const OPCODE_HEARTBEAT_ACK = 11;
+export const OPCODE_SYNC_GUILDS = 12;
+export const OPCODE_CALL_CONNECT = 13;
+
+export const DISCONNECTED = 0;
+export const DISCOVERING = 1;
+export const CONNECTING = 2;
+export const IDENTIFYING = 3;
+export const RESUMING = 4;
+export const CONNECTED = 5;

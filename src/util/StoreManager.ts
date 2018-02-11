@@ -1,15 +1,18 @@
 import {Dispatcher} from "./Dispatcher";
 
-import {Action, ActionConsumer} from "../types/structures/action";
+import {Action, ActionConsumer, ActionTypes} from "../types/structures/action";
 import {Store} from "../types/structures/store";
+import { ReadyPayload } from "./gateway/GatewayEvents";
 
 let initialized: boolean = false;
 
-const loadStores = async () => {
-    await Promise.all([
-        import("../stores/AuthStore"),
-    ]);
-};
+Dispatcher.register((action) => {
+    switch (action.type) {
+        case ActionTypes.HELLO:
+            StoreManager.initialize();
+            break;
+    }
+})
 
 export class StoreTracker {
 
@@ -29,25 +32,17 @@ export class StoreTracker {
             return;
         }
         initialized = true;
-        await Promise.all(this._stores.map(store => store.initialize()));
+        await Promise.all(this._stores.map(store => store.initialize && store.initialize()));
         this._eventConsumers.forEach(eventConsumer => {
             this.registeredConsumers.push(Dispatcher.register(eventConsumer));
         });
-    }
-
-    public async load(): Promise<void> {
-        await loadStores();
-    }
-
-    public ready(handler: () => void): void {
-        this.load().then(() => this.initialize()).then(() => handler());
     }
 
     public async destructure(): Promise<void> {
         if (!initialized) {
             return;
         }
-        await Promise.all(this._stores.map(store => store.destructure()));
+        await Promise.all(this._stores.map(store => store.destructure && store.destructure()));
         this.registeredConsumers.forEach(consumer => Dispatcher.unregister(consumer));
     }
 
@@ -57,3 +52,4 @@ export class StoreTracker {
 }
 
 export const StoreManager = new StoreTracker();
+import "../stores";

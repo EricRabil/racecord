@@ -26,7 +26,7 @@ import * as Records from './records';
 import {Record} from "./classes/Record";
 import {GatewayConnection} from "./classes/GatewayConnection";
 import * as Channels from './classes/channel';
-import {RawChannel, RawMessage} from "./types/raw";
+import {RawChannel, RawMessage, RawEmoji} from "./types/raw";
 import { SendableMessage, MessageEdit } from "./types/discord/channel/message";
 import { Client } from './classes/Client';
 

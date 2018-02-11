@@ -7,7 +7,7 @@ import { post } from "../../util/HTTPUtils";
 import { Endpoints } from "../../util/Constants";
 import { SendableMessage } from "../../types/discord/channel/message";
 import { createNonce } from "../../util/MiscUtils";
-import { sendMessage } from "../../util/rest/actions/ChannelActions";
+import { sendMessage, fetchMessages, MessageFetchQuery, fetchMessage } from "../../util/rest/actions/ChannelActions";
 
 export class TextChannel extends GuildChannel implements TextBasedChannel {
     last_message_id: string;
@@ -24,5 +24,13 @@ export class TextChannel extends GuildChannel implements TextBasedChannel {
      */
     public sendMessage(message: SendableMessage): Promise<MessageRecord> {
         return sendMessage(message, this);
+    }
+
+    public fetchMessages(query: MessageFetchQuery) {
+        return fetchMessages(this, query);
+    }
+
+    public fetchMessage(id: string) {
+        return fetchMessage(this, id);
     }
 }

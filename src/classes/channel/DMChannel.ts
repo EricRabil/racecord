@@ -4,7 +4,8 @@ import { RawUser } from "../../types/raw/RawUser";
 import { UserRecord } from "../../records/UserRecord";
 import { SendableMessage } from "../../types/discord/channel/message";
 import { MessageRecord } from "../../records/MessageRecord";
-import { sendMessage } from "../../util/rest/actions/ChannelActions";
+import { sendMessage, MessageFetchQuery, fetchMessages, fetchMessage } from "../../util/rest/actions/ChannelActions";
+import { RawEmoji } from "../../types/raw";
 
 export type DMGroupChannel = DMChannel & {
     owner_id: string;
@@ -29,4 +30,13 @@ export class DMChannel extends ChannelRecord implements TextBasedChannel {
     public sendMessage(message: SendableMessage): Promise<MessageRecord> {
         return sendMessage(message, this);
     }
+
+    public fetchMessages(query: MessageFetchQuery) {
+        return fetchMessages(this, query);
+    }
+
+    public fetchMessage(id: string) {
+        return fetchMessage(this, id);
+    }
+
 }

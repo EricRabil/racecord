@@ -7,8 +7,8 @@ export const Constants = {
 
 export const Endpoints = {
     CHANNEL_INTERACT: ({id}: RawChannel) => `/channels/${id}`,
-    SEND_MESSAGE: ({id}: RawChannel) => `/channels/${id}/messages`,
-    MODIFY_MESSAGE: ({channel_id, id}: RawMessage) => `/channels/${channel_id}/messages/${id}`
+    CHANNEL_MESSAGES: ({id}: RawChannel) => `/channels/${id}/messages`,
+    FETCH_MESSAGE: ({id}: RawChannel, messageID: string) => `/channels/${id}/messages/${messageID}`,
 };
 
 export const ChannelTypes = {

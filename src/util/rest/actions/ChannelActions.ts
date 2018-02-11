@@ -30,4 +30,26 @@ export function sendMessage(message: SendableMessage, channel: RawChannel): Prom
 
 export function editChannel(channel: ChannelRecord, edits: GuildChannelModifications): Promise<void> {
     return patch({url: Endpoints.CHANNEL_INTERACT(channel), body: edits}) as any;
+export async function fetchMessages(channel: RawChannel, query?: MessageFetchQuery): Promise<Map<string, MessageRecord>> {
+    const messageLookup = await get({
+        url: Endpoints.CHANNEL_MESSAGES(channel),
+        query,
+    });
+    const rawMessages: RawMessage[] = messageLookup.body;
+    const messages: Map<string, MessageRecord> = new Map();
+    for (const message of rawMessages) {
+        messages.set(message.id, new MessageRecord(message));
+    }
+    return messages;
+}
+
+export async function fetchMessage(channel: RawChannel, id: string): Promise<MessageRecord | undefined> {
+    const messageLookup = await get({
+        url: Endpoints.FETCH_MESSAGE(channel, id)
+    });
+    const rawMessage: RawMessage = messageLookup.body;
+    if (!rawMessage) {
+        return;
+    }
+    return new MessageRecord(rawMessage);
 }

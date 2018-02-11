@@ -7,6 +7,7 @@ import { RawMessage } from "../types/raw/RawMessage";
 import { RawChannel } from "../types/raw/RawChannel";
 import { PublicDispatcher } from "../util/Dispatcher";
 import { Analytics } from "../util/Analytics";
+const Enmap = require("enmap");
 
 const messages: Map<string, Map<string, MessageRecord>> = new Map();
 const pendingNonces: Map<string, (message: MessageRecord) => any> = new Map();
@@ -17,8 +18,8 @@ export const MessageStore = new class implements Store {
      * 
      * @param channel_id the channel snowflake
      */
-    public getMessagesForChannel(channel_id: string): Map<string, MessageRecord> {
-        return getOrCreateSection({channel_id});
+    public getMessagesForChannel(id: string): Map<string, MessageRecord> {
+        return getOrCreateSection({id});
     }
 
     /**
@@ -32,11 +33,11 @@ export const MessageStore = new class implements Store {
     }
 }
 
-function getOrCreateSection(message: {channel_id: string}): Map<string, MessageRecord> {
-    let section = messages.get(message.channel_id);
+function getOrCreateSection({id}: {id: string}): Map<string, MessageRecord> {
+    let section = messages.get(id);
     if (!section) {
         section = new Map();
-        messages.set(message.channel_id, section);
+        messages.set(id, section);
     }
     return section;
 }

@@ -13,7 +13,8 @@ import { DMChannel, DMGroupChannel } from "../classes/channel/DMChannel";
 import { MessageEdit } from "../types/discord/channel/message";
 import { patch, del } from "../util/HTTPUtils";
 import { Endpoints } from "../util/Constants";
-import { deleteMessage, editMessage } from "../util/rest/actions/MessageActions";
+import { deleteMessage, editMessage, reactToMessage, deleteOwnReaction, deleteReaction } from "../util/rest/actions/MessageActions";
+import { RawEmoji } from "../types/raw";
 
 export class MessageRecord extends Record implements RawMessage {
     id: string;
@@ -62,5 +63,33 @@ export class MessageRecord extends Record implements RawMessage {
      */
     public delete() {
         return deleteMessage(this);
+    }
+
+    /**
+     * Adds a reaction to a message
+     * 
+     * @param emoji the emoji to react with
+     */
+    public react(emoji: RawEmoji | string) {
+        return reactToMessage(this, emoji);
+    }
+
+    /**
+     * Removes the user's reaction from the message
+     * 
+     * @param emoji the emoji to remove
+     */
+    public removeOwnReaction(emoji: RawEmoji | string) {
+        return deleteOwnReaction(this, emoji);
+    }
+
+    /**
+     * Removes another user's reaction from the message
+     * 
+     * @param user the user that reacted
+     * @param emoji the emoji to remove
+     */
+    public removeReaction(user: RawUser | string, emoji: RawEmoji | string) {
+        return deleteReaction(this, typeof user === "string" ? user : user.id, emoji);
     }
 }

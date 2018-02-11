@@ -9,6 +9,8 @@ export const Endpoints = {
     CHANNEL_INTERACT: ({id}: RawChannel) => `/channels/${id}`,
     CHANNEL_MESSAGES: ({id}: RawChannel) => `/channels/${id}/messages`,
     FETCH_MESSAGE: ({id}: RawChannel, messageID: string) => `/channels/${id}/messages/${messageID}`,
+    MODIFY_MESSAGE: ({channel_id, id}: RawMessage) => `/channels/${channel_id}/messages/${id}`,
+    MESSAGE_REACT: ({channel_id, id}: RawMessage, user: string, emoji: string) => `/channels/${channel_id}/messages/${id}/reactions/${encodeURIComponent(emoji)}/${user}`
 };
 
 export const ChannelTypes = {

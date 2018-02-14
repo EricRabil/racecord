@@ -5,6 +5,8 @@ const ActionTypes = racecord.ActionTypes;
 
 racecord.Client.connect(readline.question("token\n"));
 
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 racecord.Dispatcher.register(action => {
     switch (action.type) {
         case ActionTypes.MESSAGE_CREATE:

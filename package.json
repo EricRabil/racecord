@@ -23,6 +23,7 @@
     "webpack": "^3.10.0"
   },
   "dependencies": {
+    "enmap": "^0.4.2",
     "erlpack": "^0.1.2",
     "keymirror": "^0.1.1",
     "long": "^4.0.0",

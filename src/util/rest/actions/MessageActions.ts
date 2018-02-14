@@ -1,8 +1,8 @@
 import { MessageEdit } from "../../../types/discord/channel/message";
 import { RawMessage } from "../../../types/raw/RawMessage";
-import { patch, del, put } from "../../HTTPUtils";
+import { patch, del, put, post } from "../../HTTPUtils";
 import { Endpoints } from "../../Constants";
-import { RawEmoji } from "../../../types/raw";
+import { RawEmoji, RawChannel } from "../../../types/raw";
 
 export function editMessage(edits: MessageEdit, message: RawMessage): Promise<void> {
     return patch({url: Endpoints.MODIFY_MESSAGE(message), body: edits}) as any;
@@ -26,4 +26,19 @@ export function deleteReaction(message: RawMessage, user: string, emoji: RawEmoj
 
 export function deleteOwnReaction(message: RawMessage, emoji: RawEmoji | string): Promise<void> {
     return del({url: Endpoints.MESSAGE_REACT(message, "@me", emojiToString(emoji))}) as any;
+}
+
+export function deleteMessages(channel: RawChannel, messages: string[] | RawMessage[]): Promise<void> {
+    if (typeof messages[0] !== "string") {
+        const _messages = messages;
+        messages = [];
+        for (const message of _messages) {
+            if (typeof message === "string") {
+                (messages as any[]).push(message);
+                continue;
+            }
+            (messages as any[]).push(message.id);
+        }
+    }
+    return post({url: Endpoints.BULK_DELETE(channel), body: messages}) as any;
 }

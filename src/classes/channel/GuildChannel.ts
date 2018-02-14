@@ -2,7 +2,11 @@ import { ChannelRecord } from "../../records/ChannelRecord";
 import { Overwrite } from "../../types/discord/channel/overwrite";
 import { RawChannel } from "../../types/raw/RawChannel";
 import { ChannelTypes } from "../../util/Constants";
-import { GuildChannelModifications, editChannel } from "../../util/rest/actions/ChannelActions";
+import { GuildChannelModifications, editChannel, getInvites, InviteOptions, createInvite, editOverwrite, deleteOverwrite, deleteInvite, typing, getPinnedMessages, addPin, removePin } from "../../util/rest/actions/ChannelActions";
+import { InviteRecord } from "../../records/InviteRecord";
+import { RawInvite } from "../../types/raw/RawInvite";
+import { MessageRecord } from "../../records";
+import { RawMessage } from "../../types/raw";
 
 export class GuildChannel extends ChannelRecord {
     public readonly guild_id: string;
@@ -28,24 +32,16 @@ export class GuildChannel extends ChannelRecord {
         return this.edit({position});
     }
 
-    public setTopic(topic: string): Promise<void> {
-        return this.edit({topic});
-    }
-
-    public setNSFW(nsfw: boolean): Promise<void> {
-        return this.edit({nsfw});
-    }
-
-    public setBitrate(bitrate: number): Promise<void> {
-        return this.edit({bitrate});
-    }
-
-    public setUserLimit(user_limit: number): Promise<void> {
-        return this.edit({user_limit});
-    }
-
     public setPermissionOverwrites(permission_overwrites: Overwrite[]): Promise<void> {
         return this.edit({permission_overwrites});
+    }
+
+    public editOverwrite(overwrite: Overwrite): Promise<void> {
+        return editOverwrite(this, overwrite);
+    }
+
+    public deleteOverwrite(overwrite: Overwrite): Promise<void> {
+        return deleteOverwrite(this, overwrite);
     }
 
     public setParentID(parent_id: string): Promise<void> {
@@ -55,4 +51,26 @@ export class GuildChannel extends ChannelRecord {
     public edit(edits: GuildChannelModifications): Promise<void> {
         return editChannel(this, edits);
     }
+
+    public getInvites(): Promise<InviteRecord[]> {
+        return getInvites(this);
+    }
+
+    public async getInviteMap(): Promise<Map<string, InviteRecord>> {
+        const invites = await this.getInvites();
+        const inviteMap: Map<string, InviteRecord> = new Map();
+        for (const invite of invites) {
+            inviteMap.set(invite.code, invite);
+        }
+        return inviteMap;
+    }
+
+    public createInvite(options: InviteOptions = {}): Promise<InviteRecord> {
+        return createInvite(this, options);
+    }
+
+    public deleteInvite(invite: string | RawInvite): Promise<void> {
+        return deleteInvite(invite);
+    }
+
 }

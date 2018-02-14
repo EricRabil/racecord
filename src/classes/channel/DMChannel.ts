@@ -4,8 +4,9 @@ import { RawUser } from "../../types/raw/RawUser";
 import { UserRecord } from "../../records/UserRecord";
 import { SendableMessage } from "../../types/discord/channel/message";
 import { MessageRecord } from "../../records/MessageRecord";
-import { sendMessage, MessageFetchQuery, fetchMessages, fetchMessage } from "../../util/rest/actions/ChannelActions";
-import { RawEmoji } from "../../types/raw";
+import { sendMessage, MessageFetchQuery, fetchMessages, fetchMessage, addDMRecipient, removeDMRecipient, getPinnedMessages, addPin, removePin, typing } from "../../util/rest/actions/ChannelActions";
+import { RawEmoji, RawMessage } from "../../types/raw";
+import { deleteMessages } from "../../util/rest/actions/MessageActions";
 
 export type DMGroupChannel = DMChannel & {
     owner_id: string;
@@ -37,6 +38,34 @@ export class DMChannel extends ChannelRecord implements TextBasedChannel {
 
     public fetchMessage(id: string) {
         return fetchMessage(this, id);
+    }
+
+    public deleteMessages(messages: string[] | RawMessage[]) {
+        return deleteMessages(this, messages);
+    }
+
+    public addRecipient(user: RawUser): Promise<void> {
+        return addDMRecipient(this, user);
+    }
+
+    public removeRecipient(user: RawUser): Promise<void> {
+        return removeDMRecipient(this, user);
+    }
+
+    public getPinnedMessages(): Promise<Map<string, MessageRecord>> {
+        return getPinnedMessages(this);
+    }
+
+    public pin(message: RawMessage): Promise<void> {
+        return addPin(this, message);
+    }
+
+    public unpin(message: RawMessage): Promise<void> {
+        return removePin(this, message);
+    }
+
+    public triggerTyping(): Promise<void> {
+        return typing(this);
     }
 
 }

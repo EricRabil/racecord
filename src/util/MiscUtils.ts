@@ -33,3 +33,15 @@ export function readonly(instance: any, key: string, data: any): void {
 export function createNonce() {
     return Long.fromNumber(Date.now()).subtract(1420070400000).shiftLeft(22).toString();
 }
+
+export function omit<K>(object: K, keys: string[]): Partial<K> {
+    const omitted: {[key: string]: any} = {};
+    const objectKeys = Object.keys(object);
+    for (const objectKey of objectKeys) {
+        if (keys.includes(objectKey)) {
+            continue;
+        }
+        omitted[objectKey] = (object as any)[objectKey];
+    }
+    return (omitted as any);
+}

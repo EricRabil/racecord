@@ -1,7 +1,7 @@
 import { RawChannel } from "../types/raw/RawChannel";
 import { RawMessage } from "../types/raw/RawMessage";
 import { Overwrite } from "../types/discord/channel/overwrite";
-import { RawUser } from "../types/raw";
+import { RawUser, RawGuild, RawEmoji } from "../types/raw";
 
 export const Constants = {
     API_HOST: "https://discordapp.com/api/v6",
@@ -20,7 +20,11 @@ export const Endpoints = {
     TYPING: (channel: RawChannel) => `/channels/${channel.id}/typing`,
     CHANNEL_PINS: (channel: RawChannel) => `/channels/${channel.id}/pins`,
     MANAGE_PIN: (channel: RawChannel, message: RawMessage) => `/channels/${channel.id}/pins/${message.id}`,
-    DM_MANAGE_RECIPIENT: (channel: RawChannel, user: RawUser) => `/channels/${channel.id}/recipients/${user.id}`
+    DM_MANAGE_RECIPIENT: (channel: RawChannel, user: RawUser) => `/channels/${channel.id}/recipients/${user.id}`,
+    GUILD_EMOJIS: (guild: RawGuild, emoji?: RawEmoji) => `/guilds/${guild.id}/emojis${emoji ? `/${emoji.id}` : ""}`,
+    GUILD_CREATE: `/guilds`,
+    GUILD: (guild: {id: string}) => `/guilds/${guild.id}`,
+    GUILD_CHANNELS: (guild: RawGuild) => `/guilds/${guild.id}/channels`
 };
 
 export const ChannelTypes = {

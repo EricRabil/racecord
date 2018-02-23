@@ -9,7 +9,7 @@
   "devDependencies": {
     "@types/keymirror": "^0.1.1",
     "@types/long": "^3.0.32",
-    "@types/node": "^4.0.36",
+    "@types/node": "^9.4.6",
     "@types/superagent": "^3.5.7",
     "@types/uws": "^0.13.1",
     "declaration-bundler-webpack-plugin": "^1.0.3",

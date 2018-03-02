@@ -4,6 +4,8 @@ import { Opcodes, HelloPayload, Payload, CloseCodes, GatewayEventsMap, InvalidSe
 import { Analytics } from "../util/Analytics";
 import { Dispatcher } from "../util/Dispatcher";
 
+const UWS_FAIL_RECONNECT_INTERVAL_MS = 2000;
+
 export class GatewayConnection extends EventEmitter {
 
     private connection?: SocketConnection;
@@ -11,6 +13,7 @@ export class GatewayConnection extends EventEmitter {
     private lastAck: number | null;
     private heartbeatInterval: number;
     private _heartbeatInterval?: NodeJS.Timer;
+    private connecting: boolean = false;
 
     private sequence: number | null = null;
 
@@ -72,6 +75,16 @@ export class GatewayConnection extends EventEmitter {
         const socket = new SocketConnection(this.gateway);
         socket.on("packet", this.handlePayload.bind(this));
         socket.on("error", error => {
+            if (error.message === "uWs client connection error") {
+                if (this.connecting) {
+                    Analytics.debug("socket-core", "uWs error");
+                    return;
+                }
+                this.connecting = true;
+                Analytics.debug("socket-core", `Error occurred during connection, re-connecting in ${UWS_FAIL_RECONNECT_INTERVAL_MS / 1000} seconds`);
+                setTimeout(() => this.refresh().then(() => this.connecting = false), UWS_FAIL_RECONNECT_INTERVAL_MS);
+                return;
+            }
             Analytics.debug("socket-core", `Error occurred in socket core layer:\n${JSON.stringify(error)}`);
         });
         socket.on("close", () => this.refresh());

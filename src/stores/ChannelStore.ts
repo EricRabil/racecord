@@ -4,7 +4,7 @@ import { ActionTypes } from "../types/structures/action";
 import { ChannelRecord } from "../records/ChannelRecord";
 import { ChannelCreatePayload } from "../util/gateway/GatewayEvents";
 import { RawChannel } from "../types/raw/RawChannel";
-import { ChannelTypes } from "../util/Constants";
+import { ChannelTypes, Constants, Endpoints } from "../util/Constants";
 import { TextChannel } from "../classes/channel/TextChannel";
 import { VoiceChannel } from "../classes/channel/VoiceChannel";
 import { ChannelCategory } from "../classes/channel/ChannelCategory";
@@ -14,10 +14,13 @@ import { RawGuild } from "../types/raw/RawGuild";
 import * as MiscUtils from "../util/MiscUtils";
 const {readonly} = MiscUtils;
 import { PublicDispatcher } from "../util/Dispatcher";
+import { getEntity } from "../util/HTTPUtils";
+import { Pending } from "../helpers/Pending";
 
 const channels: Map<string, ChannelRecord> = new Map();
+const waiter: Pending<ChannelRecord> = new Pending();
 
-export const ChannelStore = new class implements Store {
+export const ChannelStore = new class implements Store<ChannelRecord> {
 
     textChannels: Map<string, TextChannel>;
     voiceChannels: Map<string, VoiceChannel>;
@@ -56,6 +59,19 @@ export const ChannelStore = new class implements Store {
     public getTypedChannelsForGuild (guild: RawGuild | string, type: number) {
         return channelFilterByInstance(type, typeof guild === "string" ? guild : guild.id);
     }
+
+    public async findOrCreate(id: string): Promise<ChannelRecord | undefined> {
+        let channel: RawChannel | ChannelRecord | undefined = channels.get(id);
+        if (channel) {
+            return channel as ChannelRecord;
+        } else if (channel = await getEntity<RawChannel>(Endpoints.CHANNEL_INTERACT(id))) {
+            return handleChannelAdd(channel, false);
+        }
+    }
+
+    public once(id: string): Promise<ChannelRecord> {
+        return new Promise((resolve) => waiter.enlist(id, resolve));
+    }
 }
 
 function channelFilterByGuild (guild: string): Map<string, ChannelRecord> {
@@ -93,7 +109,7 @@ function handleChannelUpdate(channel: RawChannel) {
     }
 }
 
-function handleChannelAdd(channel: RawChannel) {
+function handleChannelAdd(channel: RawChannel, dispatch: boolean = true): ChannelRecord {
     let channelRecord: ChannelRecord;
     switch (channel.type) {
         case ChannelTypes.GUILD_TEXT:
@@ -116,7 +132,11 @@ function handleChannelAdd(channel: RawChannel) {
             break;
     }
     channels.set(channel.id, channelRecord);
-    PublicDispatcher.dispatch({type: ActionTypes.CHANNEL_CREATE, data: channelRecord});
+    if (dispatch) {
+        PublicDispatcher.dispatch({type: ActionTypes.CHANNEL_CREATE, data: channelRecord});
+    }
+    waiter.emit(channel.id, channelRecord);
+    return channelRecord;
 }
 
 function handleBulkChannelCreate(channels: RawChannel[], guild?: string) {

@@ -6,10 +6,14 @@ import { GuildCreatePayload, GuildDeletePayload, GuildUpdatePayload } from "../u
 import { Analytics } from "../util/Analytics";
 import { RawGuild } from "../types/raw/RawGuild";
 import { PublicDispatcher } from "../util/Dispatcher";
+import { getEntity } from "../util/HTTPUtils";
+import { Endpoints } from "../util/Constants";
+import { Pending } from "../helpers/Pending";
 
 const guilds: Map<string, GuildRecord> = new Map();
+const waiter: Pending<GuildRecord> = new Pending();
 
-export const GuildStore = new class implements Store {
+export const GuildStore = new class implements Store<GuildRecord> {
     /**
      * A map of all guilds
      */
@@ -20,13 +24,30 @@ export const GuildStore = new class implements Store {
     public hasGuild(guild: string) {
         return guilds.has(guild);
     }
+
+    public async findOrCreate(id: string): Promise<GuildRecord | undefined> {
+        let guild: RawGuild | GuildRecord | undefined = guilds.get(id);
+        if (guild) {
+            return guild as GuildRecord;
+        } else if (guild = await getEntity<RawGuild>(Endpoints.GUILD(id))) {
+            return handleGuildCreate({d: guild} as any, false);
+        }
+    }
+
+    public once(id: string): Promise<GuildRecord> {
+        return new Promise((resolve) => waiter.enlist(id, resolve));
+    }
 }
 
-function handleGuildCreate(action: GuildCreatePayload) {
+function handleGuildCreate(action: GuildCreatePayload, dispatch: boolean = true): GuildRecord {
     const guildData = action.d;
     const record = new GuildRecord(guildData);
     guilds.set(record.id, record);
-    PublicDispatcher.dispatch({type: ActionTypes.GUILD_CREATE, data: record});
+    if (dispatch) {
+        PublicDispatcher.dispatch({type: ActionTypes.GUILD_CREATE, data: record});
+    }
+    waiter.emit(record.id, record);
+    return record;
 }
 
 function handleGuildDelete(action: GuildDeletePayload) {

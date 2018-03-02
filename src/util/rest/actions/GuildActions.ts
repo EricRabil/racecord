@@ -1,8 +1,8 @@
-import { RawRole, RawGuild } from "../../../types/raw";
-import { GuildRecord, ChannelRecord } from "../../../records";
-import { get, patch, post, del } from "../../HTTPUtils";
+import { RawRole, RawGuild, RawChannel, RawGuildMember, RawBan, RawVoiceRegion, RawIntegration, RawGuildEmbed } from "../../../types/raw";
+import { get, patch, post, del, put } from "../../HTTPUtils";
 import { Endpoints } from "../../Constants";
 import { Overwrite } from "../../../types/discord/channel/overwrite";
+import { RawInvite } from "../../../types/raw/RawInvite";
 
 export interface GuildCreate {
     name: string;
@@ -29,24 +29,23 @@ export interface GuildEdit {
     system_channel_id?: string;
 }
 
-export async function getGuild(guild: string): Promise<GuildRecord> {
-    const {body} = await get({url: Endpoints.GUILD({id: guild})});
-    return new GuildRecord(body);
+export async function getGuild(guild: string): Promise<RawGuild> {
+    const {body} = await get({url: Endpoints.GUILD(guild)});
+    return body;
 }
 
-export async function editGuild(guild: GuildRecord, edits: GuildEdit): Promise<GuildRecord> {
+export async function editGuild(guild: string, edits: GuildEdit): Promise<RawGuild> {
     const {body} = await patch({url: Endpoints.GUILD(guild), body: edits});
-    guild.merge(body);
-    return guild;
+    return body;
 }
 
-export async function createGuild(guild: GuildCreate): Promise<GuildRecord> {
+export async function createGuild(guild: GuildCreate): Promise<RawGuild> {
     const {body} = await post({url: Endpoints.GUILD_CREATE, body: guild});
-    return new GuildRecord(body);
+    return body;
 }
 
 export function deleteGuild(guild: RawGuild): Promise<void> {
-    return del({url: Endpoints.GUILD(guild)}) as any;
+    return del({url: Endpoints.GUILD(guild.id)}) as any;
 }
 
 export interface ChannelCreate {
@@ -59,13 +58,13 @@ export interface ChannelCreate {
     nsfw?: boolean;
 }
 
-export async function createGuildChannel(guild: RawGuild, channel: ChannelCreate): Promise<ChannelRecord> {
-    const {body} = await post({url: Endpoints.GUILD_CHANNELS(guild), body: channel});
-    return new ChannelRecord(body);
+export async function createGuildChannel(guild: RawGuild, channel: ChannelCreate): Promise<RawChannel> {
+    const {body} = await post({url: Endpoints.GUILD_CHANNELS(guild.id), body: channel});
+    return body;
 }
 
 export type ChannelEdit = Array<{id: string, position: number}>;
 
 export function editPositions(guild: RawGuild, edits: ChannelEdit): Promise<void> {
-    return patch({url: Endpoints.GUILD_CHANNELS(guild), body: edits}) as any;
+    return patch({url: Endpoints.GUILD_CHANNELS(guild.id), body: edits}) as any;
 }

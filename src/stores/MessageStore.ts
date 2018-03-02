@@ -7,12 +7,17 @@ import { RawMessage } from "../types/raw/RawMessage";
 import { RawChannel } from "../types/raw/RawChannel";
 import { PublicDispatcher } from "../util/Dispatcher";
 import { Analytics } from "../util/Analytics";
+import { ChannelRecord } from "../records";
+import { getEntity } from "../util/HTTPUtils";
+import { Endpoints } from "../util/Constants";
+import { Pending } from "../helpers/Pending";
 const Enmap = require("enmap");
 
 const messages: Map<string, Map<string, MessageRecord>> = new Map();
 const pendingNonces: Map<string, (message: MessageRecord) => any> = new Map();
+const waiter: Pending<MessageRecord> = new Pending();
 
-export const MessageStore = new class implements Store {
+export const MessageStore = new class implements Store<MessageRecord> {
     /**
      * Returns a map of snowflakes to messages for a given channel
      * 
@@ -30,6 +35,29 @@ export const MessageStore = new class implements Store {
      */
     public registerNonce(nonce: string, callback: (message: MessageRecord) => any) {
         pendingNonces.set(nonce, callback);
+    }
+
+    public async findMessage(id: string, channel?: string): Promise<MessageRecord | undefined> {
+        for (const [, messageStore] of channel ? [messages.get(channel) || []] : messages) {
+            for (const [, message] of messageStore as Map<string, MessageRecord>) {
+                if (message.id === id) {
+                    return message;
+                }
+            }
+        }
+    }
+
+    public async findOrCreate(id: string, channel?: string): Promise<MessageRecord | undefined> {
+        let message: RawMessage | MessageRecord | undefined = await this.findMessage(id, channel);
+        if (message) {
+            return message as MessageRecord;
+        } else if (channel && (message = await getEntity<RawMessage>(Endpoints.MODIFY_MESSAGE(channel, id)))) {
+            return handleMessageCreate(message);
+        }
+    }
+
+    public once(id: string): Promise<MessageRecord> {
+        return new Promise((resolve) => waiter.enlist(id, resolve));
     }
 }
 
@@ -87,8 +115,9 @@ async function handleMessageDelete(message: RawMessage) {
     reallyDeleteMessage(message);
 }
 
-async function handleMessageCreate(message: RawMessage) {
+async function handleMessageCreate(message: RawMessage, dispatch: boolean = true): Promise<MessageRecord> {
     const messageRecord = new MessageRecord(message);
+    waiter.emit(message.nonce || message.id, messageRecord);
     if (messageRecord.nonce) {
         const callback = pendingNonces.get(messageRecord.nonce);
         pendingNonces.delete(messageRecord.nonce);
@@ -96,8 +125,11 @@ async function handleMessageCreate(message: RawMessage) {
             callback(messageRecord);
         }
     }
-    getOrCreateSection(message).set(message.id, messageRecord);
-    PublicDispatcher.dispatch({type: ActionTypes.MESSAGE_CREATE, data: messageRecord});
+    getOrCreateSection({id: message.channel_id}).set(message.id, messageRecord);
+    if (dispatch) {
+        PublicDispatcher.dispatch({type: ActionTypes.MESSAGE_CREATE, data: messageRecord});
+    }
+    return messageRecord;
 }
 
 async function handleMessageEdit(message: RawMessage) {
@@ -124,6 +156,22 @@ async function handleChannelDelete(channel: RawChannel) {
         return;
     }
     messages.delete(channel.id);
+}
+
+export async function mixedMessageInsert(messages: RawMessage[]): Promise<MessageRecord[]> {
+    const waitRecords: Array<Promise<MessageRecord>> = [];
+    const records: MessageRecord[] = [];
+    for (const message of messages) {
+        if (getOrCreateSection({id: message.channel_id}).has(message.id)) {
+            waitRecords.push(handleMessageCreate(message, false));
+        } else {
+            records.push(getOrCreateSection({id: message.channel_id}).get(message.id) as MessageRecord);
+        }
+    }
+    for (const message of await Promise.all(waitRecords)) {
+        records.push(message);
+    }
+    return records;
 }
 
 StoreManager.register(MessageStore, (action) => {

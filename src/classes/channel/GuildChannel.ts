@@ -37,11 +37,11 @@ export class GuildChannel extends ChannelRecord {
     }
 
     public editOverwrite(overwrite: Overwrite): Promise<void> {
-        return editOverwrite(this, overwrite);
+        return editOverwrite(this.id, overwrite);
     }
 
     public deleteOverwrite(overwrite: Overwrite): Promise<void> {
-        return deleteOverwrite(this, overwrite);
+        return deleteOverwrite(this.id, overwrite.id);
     }
 
     public setParentID(parent_id: string): Promise<void> {
@@ -49,11 +49,16 @@ export class GuildChannel extends ChannelRecord {
     }
 
     public edit(edits: GuildChannelModifications): Promise<void> {
-        return editChannel(this, edits);
+        return editChannel(this.id, edits);
     }
 
-    public getInvites(): Promise<InviteRecord[]> {
-        return getInvites(this);
+    public async getInvites(): Promise<InviteRecord[]> {
+        const rawInvites = await getInvites(this.id);
+        const invites: InviteRecord[] = [];
+        for (const rawInvite of rawInvites) {
+            invites.push(new InviteRecord(rawInvite));
+        }
+        return invites;
     }
 
     public async getInviteMap(): Promise<Map<string, InviteRecord>> {
@@ -65,8 +70,8 @@ export class GuildChannel extends ChannelRecord {
         return inviteMap;
     }
 
-    public createInvite(options: InviteOptions = {}): Promise<InviteRecord> {
-        return createInvite(this, options);
+    public async createInvite(options: InviteOptions = {}): Promise<InviteRecord> {
+        return new InviteRecord(await createInvite(this.id, options));
     }
 
     public deleteInvite(invite: string | RawInvite): Promise<void> {

@@ -5,11 +5,15 @@ import { ActionTypes } from "../types/structures/action";
 import { ReadyPayload, GuildMemberAddPayload, PresenceUpdatePayload } from "../util/gateway/GatewayEvents";
 import { RawUser } from "../types/raw/RawUser";
 import { RawGuild } from "../types/raw/RawGuild";
+import { getEntity } from "../util/HTTPUtils";
+import { Endpoints } from "../util/Constants";
+import { Pending } from "../helpers/Pending";
 
 const users: Map<string, UserRecord> = new Map();
 let currentUserId: string;
+const waiter: Pending<UserRecord> = new Pending();
 
-export const UserStore = new class implements Store {
+export const UserStore = new class implements Store<UserRecord> {
     /**
      * Gets a user by their ID
      * 
@@ -25,18 +29,34 @@ export const UserStore = new class implements Store {
     public getCurrentUser(): UserRecord {
         return users.get(currentUserId) as UserRecord;
     }
+
+    public async findOrCreate(id: string): Promise<UserRecord | undefined> {
+        let user: RawUser | UserRecord | undefined = users.get(id);
+        if (user) {
+            return user as UserRecord;
+        } else if (user = await getEntity<RawUser>(Endpoints.USER_INTERACT(id))) {
+            return addOrMergeUser(user);
+        }
+    }
+
+    public once(id: string): Promise<UserRecord> {
+        return new Promise((resolve) => waiter.enlist(id, resolve));
+    }
 }
 
-function addOrMergeUser(user: RawUser) {
+function addOrMergeUser(user: RawUser): UserRecord | undefined {
     if (!user) {
         return;
     }
-    const existingUser = users.get(user.id);
-    if (!existingUser) {
-        users.set(user.id, new UserRecord(user));
+    let userRecord = users.get(user.id);
+    if (!userRecord) {
+        userRecord = new UserRecord(user);
+        waiter.emit(userRecord.id, userRecord);
+        users.set(user.id, userRecord);
     } else {
-        existingUser.merge(user);
+        userRecord.merge(user);
     }
+    return userRecord;
 }
 
 StoreManager.register(UserStore, action => {

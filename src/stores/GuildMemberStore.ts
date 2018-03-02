@@ -8,10 +8,14 @@ import { GuildMemberAddPayload } from "../util/gateway/GatewayEvents";
 import { GuildRecord } from "../records/GuildRecord";
 import { RawGuild, RawGuildSelector } from "../types/raw/RawGuild";
 import { PublicDispatcher } from "../util/Dispatcher";
+import { getEntity } from "../util/HTTPUtils";
+import { Endpoints } from "../util/Constants";
+import { Pending } from "../helpers/Pending";
 
 const guildMembers: Map<string, Map<string, GuildMemberRecord>> = new Map();
+const waiter: Pending<GuildMemberRecord> = new Pending();
 
-export const GuildMemberStore = new class implements Store {
+export const GuildMemberStore = new class implements Store<GuildMemberRecord> {
     /**
      * An array of all members the client is keeping track of
      */
@@ -39,9 +43,41 @@ export const GuildMemberStore = new class implements Store {
         const id = typeof guild === "string" ? guild : guild.id;
         return guildMembers.get(id) as Map<string, GuildMemberRecord>;
     }
+
+    public membersForUser(user: string): Map<string, GuildMemberRecord> {
+        const memberMap: Map<string, GuildMemberRecord> = new Map();
+        for (const [guildID, memberStore] of guildMembers) {
+            for (const [, member] of memberStore) {
+                if (member.user.id === user) {
+                    memberMap.set(guildID, member);
+                }
+            }
+        }
+        return memberMap;
+    }
+
+    public async findOrCreate(id: string, guild?: string): Promise<GuildMemberRecord | undefined> {
+        if (!guild) {
+            return;
+        }
+        const memberStore = guildMembers.get(guild);
+        if (!memberStore) {
+            return;
+        }
+        let member: RawGuildMember | GuildMemberRecord | undefined = memberStore.get(id);
+        if (member) {
+            return member as GuildMemberRecord;
+        } else if (member = await getEntity<RawGuildMember>(Endpoints.GUILD_MEMBER(guild, id))) {
+            return handleGuildMemberAddOrUpdate(member);
+        }
+    }
+
+    public once(id: string): Promise<GuildMemberRecord> {
+        return new Promise((resolve) => waiter.enlist(id, resolve));
+    }
 }
 
-function handleGuildMemberAddOrUpdate(member: RawGuildMember, guild?: string, type?: ActionType) {
+function handleGuildMemberAddOrUpdate(member: RawGuildMember, guild?: string, type?: ActionType): GuildMemberRecord | undefined {
     if (!guild) {
         const extraParam = (member as any).guild_id;
         if (extraParam) {
@@ -56,6 +92,7 @@ function handleGuildMemberAddOrUpdate(member: RawGuildMember, guild?: string, ty
     let memberRecord: GuildMemberRecord;
     if (!existing) {
         memberRecord = new GuildMemberRecord(member);
+        waiter.emit(memberRecord.user.id, memberRecord);
         memberList.set(id, memberRecord);
     } else {
         existing.merge(member);
@@ -64,6 +101,7 @@ function handleGuildMemberAddOrUpdate(member: RawGuildMember, guild?: string, ty
     if (type) {
         PublicDispatcher.dispatch({type, data: memberRecord});
     }
+    return memberRecord;
 }
 
 function bulkMemberIntake(members: RawGuildMember[], guild?: string) {

@@ -5,11 +5,11 @@ import { Endpoints } from "../../Constants";
 import { RawEmoji, RawChannel } from "../../../types/raw";
 
 export function editMessage(edits: MessageEdit, message: RawMessage): Promise<void> {
-    return patch({url: Endpoints.MODIFY_MESSAGE(message), body: edits}) as any;
+    return patch({url: Endpoints.MODIFY_MESSAGE(message.channel_id, message.id), body: edits}) as any;
 }
 
 export function deleteMessage(message: RawMessage): Promise<void> {
-    return del({url: Endpoints.MODIFY_MESSAGE(message)}) as any;
+    return del({url: Endpoints.MODIFY_MESSAGE(message.channel_id, message.id)}) as any;
 }
 
 function emojiToString(emoji: RawEmoji | string): string {
@@ -17,15 +17,15 @@ function emojiToString(emoji: RawEmoji | string): string {
 }
 
 export function reactToMessage(message: RawMessage, emoji: RawEmoji | string): Promise<void> {
-    return put({url: Endpoints.MESSAGE_REACT(message, "@me", emojiToString(emoji))}) as any;
+    return put({url: Endpoints.MESSAGE_REACT(message.channel_id, message.id, "@me", emojiToString(emoji))}) as any;
 }
 
 export function deleteReaction(message: RawMessage, user: string, emoji: RawEmoji | string): Promise<void> {
-    return del({url: Endpoints.MESSAGE_REACT(message, user, emojiToString(emoji))}) as any;
+    return del({url: Endpoints.MESSAGE_REACT(message.channel_id, message.id, user, emojiToString(emoji))}) as any;
 }
 
 export function deleteOwnReaction(message: RawMessage, emoji: RawEmoji | string): Promise<void> {
-    return del({url: Endpoints.MESSAGE_REACT(message, "@me", emojiToString(emoji))}) as any;
+    return del({url: Endpoints.MESSAGE_REACT(message.channel_id, message.id, "@me", emojiToString(emoji))}) as any;
 }
 
 export function deleteMessages(channel: RawChannel, messages: string[] | RawMessage[]): Promise<void> {
@@ -40,5 +40,5 @@ export function deleteMessages(channel: RawChannel, messages: string[] | RawMess
             (messages as any[]).push(message.id);
         }
     }
-    return post({url: Endpoints.BULK_DELETE(channel), body: messages}) as any;
+    return post({url: Endpoints.BULK_DELETE(channel.id), body: messages}) as any;
 }

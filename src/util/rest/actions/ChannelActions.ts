@@ -1,15 +1,13 @@
 import { SendableMessage } from "../../../types/discord/channel/message";
 import { RawChannel } from "../../../types/raw/RawChannel";
-import { MessageRecord } from "../../../records/MessageRecord";
 import { createNonce, omit } from "../../MiscUtils";
 import { post, patch, del, get, put } from "../../HTTPUtils";
 import { Endpoints } from "../../Constants";
 import { MessageStore } from "../../../stores/index";
 import { Overwrite } from "../../../types/discord/channel/overwrite";
-import { ChannelRecord } from "../../../records";
 import { RawMessage, RawUser } from "../../../types/raw";
-import { InviteRecord } from "../../../records/InviteRecord";
 import { RawInvite } from "../../../types/raw/RawInvite";
+import { MessageRecord } from "../../../records";
 
 export interface GuildChannelModifications {
     name?: string;
@@ -22,68 +20,53 @@ export interface GuildChannelModifications {
     parent_id?: string;
 };
 
-export function sendMessage(message: SendableMessage, channel: RawChannel): Promise<MessageRecord> {
-    return new Promise((resolve, reject) => {
-        const nonce = createNonce();
-        message.nonce = nonce;
-        post({url: Endpoints.CHANNEL_MESSAGES(channel), body: message});
-        MessageStore.registerNonce(nonce, (messageRecord) => resolve(messageRecord));
-    });
+export function sendMessage(message: SendableMessage, channel: string): Promise<RawMessage> {
+    return post({url: Endpoints.CHANNEL_MESSAGES(channel), body: message}).then(res => res.body);
 }
 
-export function editChannel(channel: RawChannel, edits: GuildChannelModifications): Promise<void> {
+export function editChannel(channel: string, edits: GuildChannelModifications): Promise<void> {
     return patch({url: Endpoints.CHANNEL_INTERACT(channel), body: edits}) as any;
 }
 
-export function deleteChannel(channel: RawChannel): Promise<void> {
+export function deleteChannel(channel: string): Promise<void> {
     return del({url: Endpoints.CHANNEL_INTERACT(channel)}) as any;
 }
 
 export type MessageFetchQuery = {limit?: number} & ({around?: string} | {before?: string} | {after?: string});
 
-async function _fetchMessages(url: string, query?: any): Promise<Map<string, MessageRecord>> {
+async function _fetchMessages(url: string, query?: any): Promise<Map<string, RawMessage>> {
     const messageLookup = await get({
         url,
         query,
     });
     const rawMessages: RawMessage[] = messageLookup.body;
-    const messages: Map<string, MessageRecord> = new Map();
+    const messages: Map<string, RawMessage> = new Map();
     for (const message of rawMessages) {
-        messages.set(message.id, new MessageRecord(message));
+        messages.set(message.id, message);
     }
     return messages;
 }
 
-export function fetchMessages(channel: RawChannel, query?: MessageFetchQuery): Promise<Map<string, MessageRecord>> {
+export function fetchMessages(channel: string, query?: MessageFetchQuery): Promise<Map<string, RawMessage>> {
     return _fetchMessages(Endpoints.CHANNEL_MESSAGES(channel), query);
 }
 
-export async function fetchMessage(channel: RawChannel, id: string): Promise<MessageRecord | undefined> {
-    const messageLookup = await get({
+export function fetchMessage(channel: string, id: string): Promise<RawMessage | undefined> {
+    return get({
         url: Endpoints.FETCH_MESSAGE(channel, id)
-    });
-    const rawMessage: RawMessage = messageLookup.body;
-    if (!rawMessage) {
-        return;
-    }
-    return new MessageRecord(rawMessage);
+    }).then(res => res.body);
 }
 
-export function editOverwrite(channel: RawChannel, overwrite: Overwrite): Promise<void> {
-    return put({url: Endpoints.EDIT_PERMISSIONS(channel as any, overwrite), body: omit(overwrite, ["id"])}) as any;
+export function editOverwrite(channel: string, overwrite: Overwrite): Promise<void> {
+    return put({url: Endpoints.EDIT_PERMISSIONS(channel, overwrite.id), body: omit(overwrite, ["id"])}) as any;
 }
 
-export function deleteOverwrite(channel: RawChannel, overwrite: Overwrite): Promise<void> {
+export function deleteOverwrite(channel: string, overwrite: string): Promise<void> {
     return del({url: Endpoints.EDIT_PERMISSIONS(channel, overwrite)}) as any;
 }
 
-export async function getInvites(channel: RawChannel): Promise<InviteRecord[]> {
-    const rawInvites: RawInvite[] = (await get({url: Endpoints.CHANNEL_INVITES(channel)})).body;
-    const invites: InviteRecord[] = [];
-    for (const rawInvite of rawInvites) {
-        invites.push(new InviteRecord(rawInvite));
-    }
-    return invites;
+export function getInvites(channel: string): Promise<RawInvite[]> {
+    return get({url: Endpoints.CHANNEL_INVITES(channel)}).then(res => res.body);
 }
 
 export interface InviteOptions {
@@ -93,35 +76,34 @@ export interface InviteOptions {
     unique?: boolean;
 }
 
-export async function createInvite(channel: RawChannel, options: InviteOptions = {}): Promise<InviteRecord> {
-    const {body} = await post({url: Endpoints.CHANNEL_INVITES(channel), body: options});
-    return new InviteRecord(body);
+export function createInvite(channel: string, options: InviteOptions = {}): Promise<RawInvite> {
+    return post({url: Endpoints.CHANNEL_INVITES(channel), body: options}).then(res => res.body);
 }
 
 export function deleteInvite(invite: string | RawInvite): Promise<void> {
     return del({url: Endpoints.MANAGE_INVITE(typeof invite === "string" ? invite : invite.code)}) as any;
 }
 
-export function typing(channel: RawChannel): Promise<void> {
+export function typing(channel: string): Promise<void> {
     return post({url: Endpoints.TYPING(channel)}) as any;
 }
 
-export function getPinnedMessages(channel: RawChannel): Promise<Map<string, MessageRecord>> {
+export function getPinnedMessages(channel: string): Promise<Map<string, RawMessage>> {
     return _fetchMessages(Endpoints.CHANNEL_PINS(channel));
 }
 
-export function addPin(channel: RawChannel, message: RawMessage): Promise<void> {
+export function addPin(channel: string, message: string): Promise<void> {
     return put({url: Endpoints.MANAGE_PIN(channel, message)}) as any;
 }
 
-export function removePin(channel: RawChannel, message: RawMessage): Promise<void> {
+export function removePin(channel: string, message: string): Promise<void> {
     return del({url: Endpoints.MANAGE_PIN(channel, message)}) as any;
 }
 
-export function addDMRecipient(channel: RawChannel, recipient: RawUser): Promise<void> {
+export function addDMRecipient(channel: string, recipient: string): Promise<void> {
     return put({url: Endpoints.DM_MANAGE_RECIPIENT(channel, recipient)}) as any;
 }
 
-export function removeDMRecipient(channel: RawChannel, recipient: RawUser): Promise<void> {
+export function removeDMRecipient(channel: string, recipient: string): Promise<void> {
     return del({url: Endpoints.DM_MANAGE_RECIPIENT(channel, recipient)}) as any;
 }

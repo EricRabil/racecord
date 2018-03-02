@@ -16,11 +16,11 @@ Dispatcher.register((action) => {
 
 export class StoreTracker {
 
-    private _stores: Store[] = [];
+    private _stores: Store<any>[] = [];
     private _eventConsumers: ActionConsumer[] = [];
     private registeredConsumers: string[] = [];
 
-    public register(store: Store, events?: ActionConsumer): void {
+    public register(store: Store<any>, events?: ActionConsumer): void {
         this._stores.push(store);
         if (events) {
             this._eventConsumers.push(events);
@@ -46,7 +46,7 @@ export class StoreTracker {
         this.registeredConsumers.forEach(consumer => Dispatcher.unregister(consumer));
     }
 
-    public get stores(): Store[] {
+    public get stores(): Store<any>[] {
         return this._stores;
     }
 }

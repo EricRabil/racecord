@@ -38,7 +38,7 @@ export class ChannelRecord extends Record implements RawChannel {
     }
 
     public deleteChannel(): Promise<void> {
-        return deleteChannel(this);
+        return deleteChannel(this.id);
     }
     
 }

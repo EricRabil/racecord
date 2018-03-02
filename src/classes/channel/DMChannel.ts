@@ -7,6 +7,9 @@ import { MessageRecord } from "../../records/MessageRecord";
 import { sendMessage, MessageFetchQuery, fetchMessages, fetchMessage, addDMRecipient, removeDMRecipient, getPinnedMessages, addPin, removePin, typing } from "../../util/rest/actions/ChannelActions";
 import { RawEmoji, RawMessage } from "../../types/raw";
 import { deleteMessages } from "../../util/rest/actions/MessageActions";
+import { MessageStore, mixedMessageInsert } from "../../stores";
+import { createNonce } from "../../util/MiscUtils";
+import { TextBasedMethods } from "./util/textBasedMethods";
 
 export type DMGroupChannel = DMChannel & {
     owner_id: string;
@@ -29,15 +32,20 @@ export class DMChannel extends ChannelRecord implements TextBasedChannel {
      * @param message the message to send
      */
     public sendMessage(message: SendableMessage): Promise<MessageRecord> {
-        return sendMessage(message, this);
+        return TextBasedMethods.sendMessage(message, this.id);
     }
 
-    public fetchMessages(query: MessageFetchQuery) {
-        return fetchMessages(this, query);
+    public async fetchMessages(query: MessageFetchQuery) {
+        const messages = await mixedMessageInsert(Array.from((await fetchMessages(this.id, query)).values()));
+        const messageMap: Map<string, MessageRecord> = new Map();
+        for (const message of messages) {
+            messageMap.set(message.id, message);
+        }
+        return messageMap;
     }
 
     public fetchMessage(id: string) {
-        return fetchMessage(this, id);
+        return MessageStore.findOrCreate(id, this.id);
     }
 
     public deleteMessages(messages: string[] | RawMessage[]) {
@@ -45,27 +53,32 @@ export class DMChannel extends ChannelRecord implements TextBasedChannel {
     }
 
     public addRecipient(user: RawUser): Promise<void> {
-        return addDMRecipient(this, user);
+        return addDMRecipient(this.id, user.id);
     }
 
     public removeRecipient(user: RawUser): Promise<void> {
-        return removeDMRecipient(this, user);
+        return removeDMRecipient(this.id, user.id);
     }
 
-    public getPinnedMessages(): Promise<Map<string, MessageRecord>> {
-        return getPinnedMessages(this);
+    public async getPinnedMessages(): Promise<Map<string, MessageRecord>> {
+        const messages = await mixedMessageInsert(Array.from((await getPinnedMessages(this.id)).values()));
+        const messageMap: Map<string, MessageRecord> = new Map();
+        for (const message of messages) {
+            messageMap.set(message.id, message);
+        }
+        return messageMap;
     }
 
     public pin(message: RawMessage): Promise<void> {
-        return addPin(this, message);
+        return addPin(this.id, message.id);
     }
 
     public unpin(message: RawMessage): Promise<void> {
-        return removePin(this, message);
+        return removePin(this.id, message.id);
     }
 
     public triggerTyping(): Promise<void> {
-        return typing(this);
+        return typing(this.id);
     }
 
 }

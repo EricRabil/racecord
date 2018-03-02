@@ -11,7 +11,7 @@ const settings = {
 type Settings = typeof settings;
 type PartialSettings = Partial<Settings>;
 
-export const SettingsStore = new class implements Store {
+export const SettingsStore = new class {
     public get preserveDeletedMessages(): boolean {
         return settings.preserveDeletedMessages;
     }

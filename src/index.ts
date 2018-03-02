@@ -29,6 +29,8 @@ import * as Channels from './classes/channel';
 import {RawChannel, RawMessage, RawEmoji} from "./types/raw";
 import { SendableMessage, MessageEdit } from "./types/discord/channel/message";
 import { Client } from './classes/Client';
+import { Overwrite } from './types/discord/channel/overwrite';
+import { RawInvite } from './types/raw/RawInvite';
 
 Dispatcher.register((action) => {
     switch (action.type) {
@@ -53,7 +55,7 @@ export = {
     Stores: {
         ...Stores,
     },
-    _internal: {
+    internal: {
         actions: {
             channel: {
                 ...ChannelActions,

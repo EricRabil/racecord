@@ -83,3 +83,15 @@ export const post: HTTPFunction = sendRequest.bind(null, "post");
 export const put: HTTPFunction = sendRequest.bind(null, "put");
 export const patch: HTTPFunction = sendRequest.bind(null, "patch");
 export const del: HTTPFunction = sendRequest.bind(null, "del");
+export const getEntity: <T> (route: string) => Promise<T | undefined> = async (route) => {
+    try {
+        const entityResponse = await get({url: route});
+        return entityResponse.body;
+    } catch (response) {
+        if (response.status === 404) {
+            return undefined;
+        } else {
+            throw response;
+        }
+    }
+};

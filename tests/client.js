@@ -1,6 +1,6 @@
 const racecord = require("../lib");
 const readline = require("readline-sync");
-const MessageRecord = racecord._internal.Records.MessageRecord;
+const MessageRecord = racecord.internal.Records.MessageRecord;
 const ActionTypes = racecord.ActionTypes;
 
 racecord.Client.connect(readline.question("token\n"));

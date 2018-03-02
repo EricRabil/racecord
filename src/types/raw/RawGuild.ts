@@ -3,6 +3,7 @@ import { RawGuildMember } from "./RawGuildMember";
 import { RawChannel } from "./RawChannel";
 import { Presence } from "../discord/user/presence";
 import { RawEmoji } from "./RawEmoji";
+import { RawUser } from ".";
 
 export interface RawGuild {
     id: string;
@@ -36,6 +37,42 @@ export interface RawGuild {
     members?: RawGuildMember[];
     channels?: RawChannel[];
     presences?: Presence[];
+}
+
+export interface RawBan {
+    reason: string | null;
+    user: RawUser;
+}
+
+export interface RawVoiceRegion {
+    id: string;
+    name: string;
+    vip: boolean;
+    optimal: boolean;
+    deprecated: boolean;
+    custom: boolean;
+}
+
+export interface RawIntegration {
+    id: string;
+    name: string;
+    type: string;
+    enabled: boolean;
+    syncing: boolean;
+    role_id: string;
+    expire_behavior: number;
+    expire_grace_period: number;
+    user: RawUser;
+    account: {
+        id: string;
+        name: string;
+    };
+    synced_at: string;
+}
+
+export interface RawGuildEmbed {
+    enabled: boolean;
+    channel_id: string;
 }
 
 export interface RawGuildSelector {

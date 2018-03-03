@@ -101,6 +101,7 @@ export abstract class GatewayConnection extends EventEmitter {
     public async refresh(closeCode?: number) {
         if (this.connection) {
             this.connection.close(closeCode);
+            this.connecting = false;
         }
         await this.connect();
     }

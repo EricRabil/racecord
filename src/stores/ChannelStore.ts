@@ -28,10 +28,10 @@ export const ChannelStore = new class implements Store<ChannelRecord> {
     channelCategories: Map<string, ChannelCategory>;
 
     public constructor() {
-        readonly(this, "textChannels", channelFilterByInstance.bind(null, ChannelTypes.GUILD_TEXT));
-        readonly(this, "voiceChannels", channelFilterByInstance.bind(null, ChannelTypes.GUILD_VOICE));
-        readonly(this, "dmChannels", channelFilterByInstance.bind(null, ChannelTypes.DM));
-        readonly(this, "channelCategories", channelFilterByInstance.bind(null, ChannelTypes.CATEGORY));
+        readonly(this, "textChannels", () => channelFilterByInstance(ChannelTypes.GUILD_TEXT));
+        readonly(this, "voiceChannels", () => channelFilterByInstance(ChannelTypes.GUILD_VOICE));
+        readonly(this, "dmChannels", () => channelFilterByInstance(ChannelTypes.DM));
+        readonly(this, "channelCategories", () => channelFilterByInstance(ChannelTypes.CATEGORY));
     }
 
     /**

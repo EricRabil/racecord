@@ -17,10 +17,10 @@ export class EmojiRecord extends Record implements RawEmoji {
         super();
         this.assign(data);
         const userID = this.user.id;
-        this.readonly("user", UserStore.getUser.bind(null, userID));
+        this.readonly("user", () => UserStore.getUser(userID));
         this.readonly("animated", this.animated);
         this.readonly("id", this.id);
-        this.readonly("guild", GuildStore.guilds.get.bind(GuildStore.guilds, guild));
+        this.readonly("guild", () => guild && GuildStore.guilds.get(guild));
     }
 
     public deleteEmoji(): Promise<void> {

@@ -16,7 +16,7 @@ export class GuildMemberRecord extends Record implements RawGuildMember {
     public constructor(data: RawGuildMember) {
         super();
         this.assign(data);
-        this.readonly("user", UserStore.getUser.bind(null, this.user.id));
+        this.readonly("user", () => UserStore.getUser(data.user.id));
     }
     
 }

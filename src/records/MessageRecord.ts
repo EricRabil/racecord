@@ -48,9 +48,9 @@ export class MessageRecord extends Record implements RawMessage {
         this.assign(message);
         this.readonly("channel_id", this.channel_id);
         this.readonly("id", this.id);
-        this.readonly("author", UserStore.getUser.bind(null, this.author.id));
+        this.readonly("author", () => UserStore.getUser(message.author.id));
         this.readonly("type", this.type);
-        this.readonly("channel", ChannelStore.channels.get.bind(ChannelStore.channels, this.channel_id));
+        this.readonly("channel", () => ChannelStore.channels.get(message.channel_id));
         this.readonly("guild", () => this.channel.guild);
         this.readonly("member", () => this.guild && this.guild.getMember(message.author.id));
     }

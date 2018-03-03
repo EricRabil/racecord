@@ -11,9 +11,8 @@ export async function listEmojis(guild: RawGuild): Promise<Map<string, RawEmoji>
     return emojis;
 }
 
-export async function getEmoji(guild: RawGuild, emoji: RawEmoji): Promise<RawEmoji> {
-    const {body} = await get({url: Endpoints.GUILD_EMOJIS(guild.id, emoji.id as string)});
-    return body;
+export function getEmoji(guild: RawGuild, emoji: RawEmoji): Promise<RawEmoji> {
+    return get({url: Endpoints.GUILD_EMOJIS(guild.id, emoji.id as string)}).then(res => res.body);
 }
 
 export interface EmojiCreate {
@@ -23,8 +22,7 @@ export interface EmojiCreate {
 }
 
 export async function createEmoji(guild: RawGuild, emoji: EmojiCreate): Promise<RawEmoji> {
-    const {body} = await post({url: Endpoints.GUILD_EMOJIS(guild.id), body: emoji});
-    return body;
+    return post({url: Endpoints.GUILD_EMOJIS(guild.id), body: emoji}).then(res => res.body);
 }
 
 export interface EmojiEdit {
@@ -33,8 +31,7 @@ export interface EmojiEdit {
 }
 
 export async function editEmoji(guild: RawGuild, emoji: RawEmoji, edits: EmojiEdit): Promise<RawEmoji> {
-    const {body} = await patch({url: Endpoints.GUILD_EMOJIS(guild.id, emoji.id as string), body: edits});
-    return body;
+    return patch({url: Endpoints.GUILD_EMOJIS(guild.id, emoji.id as string), body: edits}).then(res => res.body);
 }
 
 export function deleteEmoji(guild: RawGuild, emoji: RawEmoji): Promise<void> {

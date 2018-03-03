@@ -29,23 +29,20 @@ export interface GuildEdit {
     system_channel_id?: string;
 }
 
-export async function getGuild(guild: string): Promise<RawGuild> {
-    const {body} = await get({url: Endpoints.GUILD(guild)});
-    return body;
+export function getGuild(guild: string): Promise<RawGuild> {
+    return get({url: Endpoints.GUILD(guild)}).then(res => res.body);
 }
 
-export async function editGuild(guild: string, edits: GuildEdit): Promise<RawGuild> {
-    const {body} = await patch({url: Endpoints.GUILD(guild), body: edits});
-    return body;
+export function editGuild(guild: string, edits: GuildEdit): Promise<RawGuild> {
+    return patch({url: Endpoints.GUILD(guild), body: edits}).then(res => res.body);
 }
 
-export async function createGuild(guild: GuildCreate): Promise<RawGuild> {
-    const {body} = await post({url: Endpoints.GUILD_CREATE, body: guild});
-    return body;
+export function createGuild(guild: GuildCreate): Promise<RawGuild> {
+    return post({url: Endpoints.GUILD_CREATE, body: guild}).then(res => res.body);
 }
 
-export function deleteGuild(guild: RawGuild): Promise<void> {
-    return del({url: Endpoints.GUILD(guild.id)}) as any;
+export function deleteGuild(guild: string): Promise<void> {
+    return del({url: Endpoints.GUILD(guild)}) as any;
 }
 
 export interface ChannelCreate {
@@ -58,15 +55,14 @@ export interface ChannelCreate {
     nsfw?: boolean;
 }
 
-export async function createGuildChannel(guild: RawGuild, channel: ChannelCreate): Promise<RawChannel> {
-    const {body} = await post({url: Endpoints.GUILD_CHANNELS(guild.id), body: channel});
-    return body;
+export function createGuildChannel(guild: string, channel: ChannelCreate): Promise<RawChannel> {
+    return post({url: Endpoints.GUILD_CHANNELS(guild), body: channel}).then(res => res.body);
 }
 
 export type ChannelEdit = Array<{id: string, position: number}>;
 
-export function editPositions(guild: RawGuild, edits: ChannelEdit): Promise<void> {
-    return patch({url: Endpoints.GUILD_CHANNELS(guild.id), body: edits}) as any;
+export function modifyChannelPositions(guild: string, edits: ChannelEdit): Promise<void> {
+    return patch({url: Endpoints.GUILD_CHANNELS(guild), body: edits}) as any;
 }
 
 export function getMember(guild: string, member: string): Promise<RawGuildMember> {
@@ -100,22 +96,27 @@ export interface EditGuildMemberRequest extends AddGuildMemberRequest {
     channel_id?: string;
 }
 
+// member
 export function editMember(guild: string, member: string, patches: EditGuildMemberRequest): Promise<void> {
     return patch({url: Endpoints.GUILD_MEMBER(guild, member), body: patches}) as any;
 }
 
+// selfMember
 export function setSelfNickname(guild: string, nickname: string): Promise<string> {
     return patch({url: Endpoints.SET_SELF_NICKNAME(guild), body: {nick: nickname}}).then(res => res.body.nick);
 }
 
+// member
 export function addRoleToMember(guild: string, user: string, role: string): Promise<void> {
     return put({url: Endpoints.MEMBER_ROLE(guild, user, role)}) as any;
 }
 
+// member
 export function removeRoleFromMember(guild: string, user: string, role: string): Promise<void> {
     return del({url: Endpoints.MEMBER_ROLE(guild, user, role)}) as any;
 }
 
+// member
 export function kickMember(guild: string, user: string): Promise<void> {
     return del({url: Endpoints.GUILD_MEMBER(guild, user)}) as any;
 }
@@ -129,6 +130,7 @@ export interface BanOptions {
     reason?: string;
 }
 
+// member
 export function banUser(guild: string, user: string, opts?: BanOptions): Promise<void> {
     const apiOpts = {
         "delete-message-days": opts && opts.deleteMessageDays || 0,
@@ -150,16 +152,16 @@ export interface RolePosition {
     position: number;
 }
 
-export function modifyPositions(guild: string, positions: RolePosition[]): Promise<RawRole[]> {
+export function modifyRolePositions(guild: string, positions: RolePosition[]): Promise<RawRole[]> {
     return patch({url: Endpoints.GUILD_ROLES(guild), body: positions}).then(res => res.body);
 }
 
 export interface RoleEdit {
-    name: string;
-    permissions: number;
-    color: number;
-    hoist: boolean;
-    mentionable: boolean;
+    name?: string;
+    permissions?: number;
+    color?: number;
+    hoist?: boolean;
+    mentionable?: boolean;
 }
 
 export function editRole(guild: string, role: string, edits: RoleEdit): Promise<RawRole> {

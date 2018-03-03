@@ -3,5 +3,4 @@ export interface Store<T> {
     destructure? (): Promise<void>;
     findOrCreate(id: string): Promise<T | undefined>;
     once(id: string): Promise<T>;
-    [key: string]: any;
 }

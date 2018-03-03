@@ -98,4 +98,12 @@ export class MessageRecord extends Record implements RawMessage {
     public removeReaction(user: RawUser | string, emoji: RawEmoji | string) {
         return deleteReaction(this, typeof user === "string" ? user : user.id, emoji);
     }
+
+    public pin(): Promise<void> {
+        return this.channel.pin(this);
+    }
+
+    public unpin(): Promise<void> {
+        return this.channel.unpin(this);
+    }
 }

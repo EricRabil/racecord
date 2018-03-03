@@ -48,10 +48,6 @@ export class Commander extends EventEmitter {
         });
     }
 
-    public createCommandDict(): {[key: string]: ((event: MessageEvent) => any) | undefined} {
-        return {};
-    }
-
     public registerCommand(command: Command) {
         this.registerCommands([command]);
     }

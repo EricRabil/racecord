@@ -26,11 +26,12 @@ import * as Records from './records';
 import {Record} from "./classes/Record";
 import {GatewayConnection} from "./classes/GatewayConnection";
 import * as Channels from './classes/channel';
-import {RawChannel, RawMessage, RawEmoji} from "./types/raw";
+import * as RawTypes from "./types/raw";
 import { SendableMessage, MessageEdit } from "./types/discord/channel/message";
 import { Client } from './classes/Client';
 import { Overwrite } from './types/discord/channel/overwrite';
 import { RawInvite } from './types/raw/RawInvite';
+import { Commander } from './commands/Commander';
 
 Dispatcher.register((action) => {
     switch (action.type) {
@@ -50,6 +51,7 @@ export = {
     Dispatcher: PublicDispatcher,
     HTTPUtils: HTTPUtils,
     Client: Client,
+    Commander: Commander,
     StoreManager: StoreManager,
     ...Channels,
     Stores: {

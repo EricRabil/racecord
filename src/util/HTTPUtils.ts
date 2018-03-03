@@ -20,12 +20,7 @@ export interface FulfilledRequest {
     status: number;
 }
 
-export interface HTTPPromise {
-    then(handler: (req: FulfilledRequest) => any): void;
-    catch(handler: (req: FulfilledRequest) => any): void;
-}
-
-export function sendRequest(method: HTTPMethod, opts: HTTPRequest, resolveOverride?: () => void, rejectOverride?: () => void): HTTPPromise {
+export function sendRequest(method: HTTPMethod, opts: HTTPRequest, resolveOverride?: () => void, rejectOverride?: () => void): Promise<FulfilledRequest> {
     return new Promise((resolve, reject) => {
         resolve = resolveOverride || resolve;
         reject = rejectOverride || reject;
@@ -76,13 +71,11 @@ export function sendRequest(method: HTTPMethod, opts: HTTPRequest, resolveOverri
 
 // export type HTTPMethod = 'get' | 'post' | 'put' | 'patch' | 'del';
 
-export type HTTPFunction = (opts: HTTPRequest) => Promise<FulfilledRequest>;
-
-export const get: HTTPFunction = sendRequest.bind(null, "get");
-export const post: HTTPFunction = sendRequest.bind(null, "post");
-export const put: HTTPFunction = sendRequest.bind(null, "put");
-export const patch: HTTPFunction = sendRequest.bind(null, "patch");
-export const del: HTTPFunction = sendRequest.bind(null, "del");
+export const get = (opts: HTTPRequest) => sendRequest("get", opts);
+export const post = (opts: HTTPRequest) => sendRequest("post", opts);
+export const put= (opts: HTTPRequest) => sendRequest("put", opts);
+export const patch = (opts: HTTPRequest) => sendRequest("patch", opts);
+export const del = (opts: HTTPRequest) => sendRequest("del", opts);
 export const getEntity: <T> (route: string) => Promise<T | undefined> = async (route) => {
     try {
         const entityResponse = await get({url: route});

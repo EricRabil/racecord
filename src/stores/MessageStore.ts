@@ -162,7 +162,7 @@ export async function mixedMessageInsert(messages: RawMessage[]): Promise<Messag
     const waitRecords: Array<Promise<MessageRecord>> = [];
     const records: MessageRecord[] = [];
     for (const message of messages) {
-        if (getOrCreateSection({id: message.channel_id}).has(message.id)) {
+        if (!getOrCreateSection({id: message.channel_id}).has(message.id)) {
             waitRecords.push(handleMessageCreate(message, false));
         } else {
             records.push(getOrCreateSection({id: message.channel_id}).get(message.id) as MessageRecord);

@@ -122,6 +122,19 @@ export const Opcodes = {
     GUILD_SYNC: 12
 };
 
+export const VoiceOpcodes = {
+    IDENTIFY: 0,
+    SELECT_PROTOCOL: 1,
+    VOICE_READY: 2,
+    HEARTBEAT: 3,
+    SESSION_DESCRIPTION: 4,
+    SPEAKING: 5,
+    HEARTBEAT_ACK: 6,
+    RESUME_CONNECTION: 7,
+    HELLO: 8,
+    RESUMED: 9
+}
+
 export const DispatchEvents = keyMirror({
     CHANNEL_CREATE: null,
     CHANNEL_UPDATE: null,

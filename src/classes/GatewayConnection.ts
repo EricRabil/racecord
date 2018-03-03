@@ -1,23 +1,23 @@
 import { SocketConnection } from "../util/gateway/SocketConnection";
 import { EventEmitter } from "events";
-import { Opcodes, HelloPayload, Payload, CloseCodes, GatewayEventsMap, InvalidSessionPayload } from "../util/gateway/GatewayEvents";
+import { HelloPayload, Payload, CloseCodes, GatewayEventsMap, InvalidSessionPayload, Opcodes } from "../util/gateway/GatewayEvents";
 import { Analytics } from "../util/Analytics";
 import { Dispatcher } from "../util/Dispatcher";
 
 const UWS_FAIL_RECONNECT_INTERVAL_MS = 2000;
 
-export class GatewayConnection extends EventEmitter {
+export abstract class GatewayConnection extends EventEmitter {
 
-    private connection?: SocketConnection;
+    protected connection?: SocketConnection;
 
-    private lastAck: number | null;
-    private heartbeatInterval: number;
-    private _heartbeatInterval?: NodeJS.Timer;
-    private connecting: boolean = false;
+    protected lastAck: number | null;
+    protected heartbeatInterval: number;
+    protected _heartbeatInterval?: NodeJS.Timer;
+    protected connecting: boolean = false;
 
-    private sequence: number | null = null;
+    protected sequence: number | null = null;
 
-    constructor(private readonly gateway: string = "wss://gateway.discord.gg/?encoding=etf&v=6&compress=zlib-stream") {
+    constructor(protected readonly gateway: string = "wss://gateway.discord.gg/?encoding=etf&v=6&compress=zlib-stream", private heartbetaOP: number = Opcodes.HEARTBEAT) {
         super();
         let disconnectedCount = 0;
         setInterval(() => {
@@ -69,11 +69,11 @@ export class GatewayConnection extends EventEmitter {
     /**
      * Initializes a connection instance
      */
-    private initConnection(): SocketConnection {
+    protected initConnection(): SocketConnection {
         this.clearHeartbeater();
         Analytics.debug("gateway", "Initializing a base socket wrapper");
         const socket = new SocketConnection(this.gateway);
-        socket.on("packet", this.handlePayload.bind(this));
+        socket.on("packet", (packet) => this.handlePayload(packet));
         socket.on("error", error => {
             if (error.message === "uWs client connection error") {
                 if (this.connecting) {
@@ -108,40 +108,12 @@ export class GatewayConnection extends EventEmitter {
     /**
      * Internal payload handler
      */
-    private handlePayload(payload: Payload) {
-        if (payload.op !== 0) {
-            Analytics.debug("gateway-intake", `Received OPCode ${payload.op} ${GatewayEventsMap[payload.op]}`);
-            Dispatcher.dispatch({type: GatewayEventsMap[payload.op], data: payload.d, payload});
-        } else {
-            Analytics.debug("gateway-intake", `Received dispatch ${payload.t}`);
-        }
-        switch (payload.op) {
-            case Opcodes.HELLO:
-                this.handleHello(payload as any);
-                break;
-            case Opcodes.RECONNECT:
-                break;
-            case Opcodes.INVALID_SESSION:
-                break;
-            case Opcodes.HEARTBEAT_ACK:
-                this.handleHBAck();
-                break;
-            case Opcodes.DISPATCH:
-                Dispatcher.dispatch({type: payload.t as any, data: payload.d, payload});
-                this.emit((payload.t as string).toLowerCase(), payload.d);
-                break;
-            case Opcodes.INVALID_SESSION:
-                Analytics.debug("gateway-auth", "Server reported a bad session.");
-            default:
-                Analytics.debug("gateway-intake", `Unknown op ${payload.op}`);
-                break;
-        }
-    }
+    public abstract handlePayload(payload: Payload): void;
 
     /**
      * Sends the actual heartbeat to the gateway regardless of intervals
      */
-    private async expeditedHeartbeat() {
+    protected async expeditedHeartbeat() {
         Analytics.debug("life-support", "Sending a heartbeat");
         if (this.lastAck !== null) {
             const timespan = Date.now() - this.lastAck;
@@ -153,13 +125,13 @@ export class GatewayConnection extends EventEmitter {
                 Analytics.debug("life-support", `Last ack timestamp seems okay. (Missed acks: ${missedCycles})`);
             }
         }
-        await this.send({op: Opcodes.HEARTBEAT, d: this.sequence});
+        await this.send({op: this.heartbetaOP, d: this.sequence});
     }
 
     /**
      * Clears the heartbeater. Useful when we are re-connecting.
      */
-    private clearHeartbeater() {
+    protected clearHeartbeater() {
         if (this._heartbeatInterval) {
             Analytics.debug("life-support", "Clearing previous heartbeat timer.");
             clearInterval(this._heartbeatInterval);
@@ -167,24 +139,22 @@ export class GatewayConnection extends EventEmitter {
         }
     }
 
-    /**
-     * Starts a heartbeat interval.
-     */
-    private heartbeat() {
+    protected heartbeat() {
         Analytics.debug("life-support", "Initializing a heartbeat timer");
         this.clearHeartbeater();
-        this._heartbeatInterval = setInterval(this.expeditedHeartbeat.bind(this), this.heartbeatInterval) as any;
+        this._heartbeatInterval = setInterval(() => this.expeditedHeartbeat(), this.heartbeatInterval) as any;
     }
 
-    private handleHello(payload: HelloPayload) {
+    protected handleHello(payload: HelloPayload) {
         this.heartbeatInterval = payload.d.heartbeat_interval;
         this.lastAck = Date.now() + this.heartbeatInterval;
         this.emit("identifiable");
         this.heartbeat();
     }
 
-    private handleHBAck() {
+    protected handleHBAck() {
         this.lastAck = Date.now();
         Analytics.debug("life-support", "Heartbeat acknowledged.");
     }
+
 }

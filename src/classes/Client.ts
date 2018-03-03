@@ -3,10 +3,11 @@ import { platform } from "os";
 import { GatewayConnection } from "./GatewayConnection";
 import { Dispatcher } from "../util/Dispatcher";
 import { ActionTypes } from "../types/structures/action";
+import { TextGatewayConnection } from "./TextGatewayConnection";
 
 export const Client = new (class Client {
 
-    public gatewayConnection: GatewayConnection = new GatewayConnection();
+    public gatewayConnection: GatewayConnection = new TextGatewayConnection();
 
     public connect(token: string | InnerIdentifyPayload): Promise<void> {
         const innerPayload: InnerIdentifyPayload = typeof token === "string" ? {

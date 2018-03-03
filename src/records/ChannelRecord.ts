@@ -6,9 +6,10 @@ import { post } from "../util/HTTPUtils";
 import { Endpoints } from "../util/Constants";
 import { SendableMessage } from "../types/discord/channel/message";
 import { createNonce } from "../util/MiscUtils";
-import { MessageStore } from "../stores/index";
+import { MessageStore, GuildStore } from "../stores/index";
 import { MessageRecord } from "./MessageRecord";
 import { deleteChannel } from "../util/rest/actions/ChannelActions";
+import { GuildRecord } from ".";
 
 export class ChannelRecord extends Record implements RawChannel {
 
@@ -30,11 +31,14 @@ export class ChannelRecord extends Record implements RawChannel {
     parent_id?: string | null;
     last_pin_timestamp?: string;
 
+    guild?: GuildRecord;
+
     public constructor(data: RawChannel) {
         super();
         this.assign(data);
         this.readonly("id", this.id);
         this.readonly("type", this.type);
+        this.readonly("guild", () => GuildStore.guilds.get(this.guild_id as string));
     }
 
     public deleteChannel(): Promise<void> {

@@ -15,6 +15,7 @@ import { patch, del } from "../util/HTTPUtils";
 import { Endpoints } from "../util/Constants";
 import { deleteMessage, editMessage, reactToMessage, deleteOwnReaction, deleteReaction } from "../util/rest/actions/MessageActions";
 import { RawEmoji } from "../types/raw";
+import { GuildRecord, GuildMemberRecord } from ".";
 
 export class MessageRecord extends Record implements RawMessage {
     id: string;
@@ -39,6 +40,9 @@ export class MessageRecord extends Record implements RawMessage {
     deleted: boolean = false;
     channel: TextChannel | DMChannel | DMGroupChannel;
 
+    guild?: GuildRecord;
+    member?: GuildMemberRecord;
+
     public constructor(message: RawMessage) {
         super();
         this.assign(message);
@@ -47,6 +51,8 @@ export class MessageRecord extends Record implements RawMessage {
         this.readonly("author", UserStore.getUser.bind(null, this.author.id));
         this.readonly("type", this.type);
         this.readonly("channel", ChannelStore.channels.get.bind(ChannelStore.channels, this.channel_id));
+        this.readonly("guild", () => this.channel.guild);
+        this.readonly("member", () => this.guild && this.guild.getMember(message.author.id));
     }
 
     /**

@@ -11,7 +11,7 @@ export const Endpoints = {
     BULK_DELETE: (id: string) => `/channels/${id}/messages/bulk-delete`,
     EDIT_PERMISSIONS: (id: string, overwrite: string) => `/channels/${id}/permissions/${overwrite}`,
     CHANNEL_INVITES: (id: string) => `/channels/${id}/invites`,
-    MANAGE_INVITE: (invite: string) => `/invite/${invite}`,
+    MANAGE_INVITE: (invite: string) => `/invites/${invite}`,
     TYPING: (channel: string) => `/channels/${channel}/typing`,
     CHANNEL_PINS: (channel: string) => `/channels/${channel}/pins`,
     MANAGE_PIN: (channel: string, message: string) => `/channels/${channel}/pins/${message}`,
@@ -36,7 +36,15 @@ export const Endpoints = {
     GUILD_SYNC_INTEGRATION: (guild: string, integration: string) => `/guilds/${guild}/integrations/${integration}/sync`,
     GUILD_EMBED: (guild: string) => `/guilds/${guild}/embed`,
     GUILD_VANITY_URL: (guild: string) => `/guilds/${guild}/vanity-url`,
-    USER_INTERACT: (user: string) => `/users/${user}`
+    USER_INTERACT: (user: string) => `/users/${user}`,
+    USER_GUILDS: (user: string) => `/users/${user}/guilds`,
+    USER_GUILD: (user: string, guild: string) => `/users/${user}/guilds/${guild}`,
+    USER_DIRECT_MESSAGES: (user: string) => `/users/${user}/channels`,
+    USER_CONNECTIONS: (user: string) => `/users/${user}/connections`,
+    VOICE_REGIONS: `/voice/regions`,
+    CHANNEL_WEBHOOKS: (channel: string) => `/channels/${channel}/webhooks`,
+    WEBHOOK: (webhook: string, token?: string) => `/webhooks/${webhook}${token ? `/${token}` : ""}`,
+    GUILD_WEBHOOKS: (guild: string) => `/guilds/${guild}/webhooks`
 };
 
 export const ChannelTypes = {

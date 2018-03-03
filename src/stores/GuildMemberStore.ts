@@ -77,7 +77,7 @@ export const GuildMemberStore = new class implements Store<GuildMemberRecord> {
     }
 }
 
-function handleGuildMemberAddOrUpdate(member: RawGuildMember, guild?: string, type?: ActionType): GuildMemberRecord | undefined {
+export function handleGuildMemberAddOrUpdate(member: RawGuildMember, guild?: string, type?: ActionType, dispatch: boolean = true): GuildMemberRecord | undefined {
     if (!guild) {
         const extraParam = (member as any).guild_id;
         if (extraParam) {
@@ -91,17 +91,31 @@ function handleGuildMemberAddOrUpdate(member: RawGuildMember, guild?: string, ty
     const existing = memberList.get(id);
     let memberRecord: GuildMemberRecord;
     if (!existing) {
-        memberRecord = new GuildMemberRecord(member);
+        memberRecord = new GuildMemberRecord(member, guild as string);
         waiter.emit(memberRecord.user.id, memberRecord);
         memberList.set(id, memberRecord);
     } else {
         existing.merge(member);
         memberRecord = existing;
     }
-    if (type) {
+    if (type && dispatch) {
         PublicDispatcher.dispatch({type, data: memberRecord});
     }
     return memberRecord;
+}
+
+function getOrCreateSection(id: string): Map<string, GuildMemberRecord> {
+    return guildMembers.get(id) || guildMembers.set(id, new Map()).get(id) as Map<string, GuildMemberRecord>;
+}
+
+export function mixedMemberInsert(guild: string, members: RawGuildMember[]): Map<string, GuildMemberRecord> {
+    const section = getOrCreateSection(guild);
+    const sorted: Map<string, GuildMemberRecord> = new Map();
+    for (const member of members) {
+        const record = handleGuildMemberAddOrUpdate(member, guild, undefined, false) as GuildMemberRecord;
+        sorted.set(record.user.id, record);
+    }
+    return sorted;
 }
 
 function bulkMemberIntake(members: RawGuildMember[], guild?: string) {

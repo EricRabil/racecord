@@ -92,10 +92,10 @@ export class SocketConnection extends EventEmitter {
     public connect(): void {
         this.closing = false;
         this.ws = new ws(this.GW_URL);
-        this.ws.onopen = this.emit.bind(this, "open");
-        this.ws.onmessage = this.emit.bind(this, "message");
-        this.ws.onclose = this.emit.bind(this, "close");
-        this.ws.onerror = this.emit.bind(this, "error");
+        this.ws.onopen = event => this.emit("open", event);
+        this.ws.onmessage = event => this.emit("message", event);
+        this.ws.onclose = event => this.emit("close", event);
+        this.ws.onerror = event => this.emit("error", event);
     }
 
     public close(code?: number): void {

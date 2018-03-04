@@ -39,6 +39,11 @@ export class TextGatewayConnection extends GatewayConnection {
         }
     }
 
+    /**
+     * Initiate connection to a voice channel
+     * @param channel the channel to connect to
+     * @param opts the options
+     */
     public joinVoiceChannel(channel: VoiceChannel, opts: {self_mute: boolean, self_deaf: boolean}): Promise<void> {
         return this.send({
             d: {

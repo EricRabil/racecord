@@ -9,6 +9,10 @@ export const Client = new (class Client {
 
     public gatewayConnection: GatewayConnection = new TextGatewayConnection();
 
+    /**
+     * Connect to DAPI
+     * @param token the token to identify with
+     */
     public connect(token: string | InnerIdentifyPayload): Promise<void> {
         const innerPayload: InnerIdentifyPayload = typeof token === "string" ? {
             token,

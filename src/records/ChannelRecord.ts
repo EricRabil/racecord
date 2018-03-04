@@ -41,6 +41,7 @@ export class ChannelRecord extends Record implements RawChannel {
         this.readonly("guild", () => GuildStore.guilds.get(this.guild_id as string));
     }
 
+    /** Deletes this channel */
     public deleteChannel(): Promise<void> {
         return deleteChannel(this.id);
     }

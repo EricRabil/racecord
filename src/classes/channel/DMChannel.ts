@@ -22,6 +22,9 @@ export class DMChannel extends ChannelRecord implements TextBasedChannel {
     recipients: UserRecord[];
     type: 1 | 3;
 
+    /**
+     * Returns whether this is a DMGroupChannel
+    */
     public isGroupChannel(): this is DMGroupChannel {
         return "owner_id" in this && "name" in this;
     }
@@ -35,6 +38,10 @@ export class DMChannel extends ChannelRecord implements TextBasedChannel {
         return TextBasedMethods.sendMessage(message, this.id);
     }
 
+    /**
+     * Fetches messages for this channel based on a given query
+     * @param query 
+     */
     public async fetchMessages(query: MessageFetchQuery) {
         const messages = await mixedMessageInsert(Array.from((await fetchMessages(this.id, query)).values()));
         const messageMap: Map<string, MessageRecord> = new Map();
@@ -44,22 +51,42 @@ export class DMChannel extends ChannelRecord implements TextBasedChannel {
         return messageMap;
     }
 
+    /**
+     * Fetch a specific message based on its ID
+     * @param id the snowflake
+     */
     public fetchMessage(id: string) {
         return MessageStore.findOrCreate(id, this.id);
     }
 
+    /**
+     * Delete a given array of message IDs
+     * 
+     * @param messages the messages to delete
+     */
     public deleteMessages(messages: string[] | RawMessage[]) {
         return deleteMessages(this, messages);
     }
 
+    /**
+     * Add a user to a group DM
+     * @param user the user to add
+     */
     public addRecipient(user: RawUser): Promise<void> {
         return addDMRecipient(this.id, user.id);
     }
 
+    /**
+     * Remove a recipient from a group DM
+     * @param user the user to remove
+     */
     public removeRecipient(user: RawUser): Promise<void> {
         return removeDMRecipient(this.id, user.id);
     }
 
+    /**
+     * Get the pinned messages in this channel
+    */
     public async getPinnedMessages(): Promise<Map<string, MessageRecord>> {
         const messages = await mixedMessageInsert(Array.from((await getPinnedMessages(this.id)).values()));
         const messageMap: Map<string, MessageRecord> = new Map();
@@ -69,14 +96,25 @@ export class DMChannel extends ChannelRecord implements TextBasedChannel {
         return messageMap;
     }
 
+    /**
+     * Pin a message to this channel
+     * @param message the message to pin
+     */
     public pin(message: RawMessage): Promise<void> {
         return addPin(this.id, message.id);
     }
 
+    /**
+     * Unpin a message from this channel
+     * @param message the message to unpin
+     */
     public unpin(message: RawMessage): Promise<void> {
         return removePin(this.id, message.id);
     }
 
+    /**
+     * Trigger the typing status for this channel
+     */
     public triggerTyping(): Promise<void> {
         return typing(this.id);
     }

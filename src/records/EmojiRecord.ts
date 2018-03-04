@@ -23,6 +23,7 @@ export class EmojiRecord extends Record implements RawEmoji {
         this.readonly("guild", () => guild && GuildStore.guilds.get(guild));
     }
 
+    /** Deletes this emoji */
     public deleteEmoji(): Promise<void> {
         if (!this.guild) {
             return new Promise(resolve => resolve());
@@ -30,10 +31,22 @@ export class EmojiRecord extends Record implements RawEmoji {
         return deleteEmoji(this.guild, this);
     }
 
+    /**
+     * Applies the given edits to this emoji
+     * @param edits the edits to apply
+     */
     public editEmoji(edits: EmojiEdit): Promise<void> {
         if (!this.guild) {
             return new Promise(resolve => resolve());
         }
         return editEmoji(this.guild, this, edits) as any;
+    }
+
+    /**
+     * Changes the name of this emoji
+     * @param name the new name
+     */
+    public setName(name: string): Promise<void> {
+        return this.editEmoji({name});
     }
 }

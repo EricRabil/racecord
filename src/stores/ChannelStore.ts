@@ -34,6 +34,14 @@ export const ChannelStore = new class implements Store<ChannelRecord> {
         readonly(this, "channelCategories", () => channelFilterByInstance(ChannelTypes.CATEGORY));
     }
 
+    public get dmChannelsByUID(): Map<string, DMChannel> {
+        const channelMap: Map<string, DMChannel> = new Map();
+        for (const [,channel] of this.dmChannels) {
+            channelMap.set(channel.recipients[0].id, channel);
+        }
+        return channelMap;
+    }
+
     /**
      * A map of channel IDs to channel records
      */
@@ -60,6 +68,10 @@ export const ChannelStore = new class implements Store<ChannelRecord> {
         return channelFilterByInstance(type, typeof guild === "string" ? guild : guild.id);
     }
 
+    /**
+     * Finds or retrieves a channel with this ID
+     * @param id the channel ID to look for
+     */
     public async findOrCreate(id: string): Promise<ChannelRecord | undefined> {
         let channel: RawChannel | ChannelRecord | undefined = channels.get(id);
         if (channel) {
@@ -69,6 +81,10 @@ export const ChannelStore = new class implements Store<ChannelRecord> {
         }
     }
 
+    /**
+     * Resolves a promise once the given object has been created
+     * @param id the object to wait for
+     */
     public once(id: string): Promise<ChannelRecord> {
         return new Promise((resolve) => waiter.enlist(id, resolve));
     }

@@ -32,7 +32,7 @@ export class StoreTracker {
             return;
         }
         initialized = true;
-        await Promise.all(this._stores.map(store => store.initialize && store.initialize()));
+        await Promise.all(this._stores.map(store => store && store.initialize && store.initialize()));
         this._eventConsumers.forEach(eventConsumer => {
             this.registeredConsumers.push(Dispatcher.register(eventConsumer));
         });

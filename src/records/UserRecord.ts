@@ -1,5 +1,9 @@
 import { Record } from "../classes/Record";
 import { RawUser } from "../types/raw/RawUser";
+import { DMChannel } from "../classes/channel";
+import { createDirectMessage } from "../util/rest/actions/UserActions";
+import { ChannelStore, UserStore } from "../stores";
+import { Endpoints } from "../util/Constants";
 
 export class UserRecord extends Record implements RawUser {
 
@@ -12,9 +16,17 @@ export class UserRecord extends Record implements RawUser {
     verified?: boolean | undefined;
     email?: string | undefined;
 
+    dmChannel?: DMChannel;
+
     public constructor(data: RawUser) {
         super();
         this.assign(data);
+        this.readonly("dmChannel", () => ChannelStore.dmChannelsByUID.get(this.id));
+    }
+
+    /** Opens a DM with this user */
+    public createDM(): Promise<DMChannel> {
+        return UserStore.getCurrentUser().openDM(this.id);
     }
     
 }

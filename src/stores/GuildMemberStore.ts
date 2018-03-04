@@ -2,7 +2,7 @@ import { Store } from "../types/structures/store";
 import { GuildMemberRecord } from "../records/GuildMemberRecord";
 import { RawGuildMember } from "../types/raw/RawGuildMember";
 import { StoreManager } from "../util/StoreManager";
-import { GuildStore } from "./index";
+import { GuildStore, UserStore, addOrMergeUser } from "./index";
 import { ActionTypes, ActionType } from "../types/structures/action";
 import { GuildMemberAddPayload } from "../util/gateway/GatewayEvents";
 import { GuildRecord } from "../records/GuildRecord";
@@ -91,6 +91,7 @@ export function handleGuildMemberAddOrUpdate(member: RawGuildMember, guild?: str
     const existing = memberList.get(id);
     let memberRecord: GuildMemberRecord;
     if (!existing) {
+        addOrMergeUser(member.user);
         memberRecord = new GuildMemberRecord(member, guild as string);
         waiter.emit(memberRecord.user.id, memberRecord);
         memberList.set(id, memberRecord);

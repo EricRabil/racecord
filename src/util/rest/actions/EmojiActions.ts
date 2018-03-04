@@ -26,8 +26,8 @@ export async function createEmoji(guild: RawGuild, emoji: EmojiCreate): Promise<
 }
 
 export interface EmojiEdit {
-    name: string;
-    roles: string[];
+    name?: string;
+    roles?: string[];
 }
 
 export async function editEmoji(guild: RawGuild, emoji: RawEmoji, edits: EmojiEdit): Promise<RawEmoji> {

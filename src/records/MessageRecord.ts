@@ -40,6 +40,8 @@ export class MessageRecord extends Record implements RawMessage {
     deleted: boolean = false;
     channel: TextChannel | DMChannel | DMGroupChannel;
 
+    sent_timestamp: Date;
+
     guild?: GuildRecord;
     member?: GuildMemberRecord;
 
@@ -52,7 +54,8 @@ export class MessageRecord extends Record implements RawMessage {
         this.readonly("type", this.type);
         this.readonly("channel", () => ChannelStore.channels.get(message.channel_id));
         this.readonly("guild", () => this.channel.guild);
-        this.readonly("member", () => this.guild && this.guild.getMember(message.author.id));
+        this.readonly("member", this.guild && this.guild.getMember(message.author.id));
+        this.readonly("sent_timestamp", new Date(this.timestamp));
     }
 
     /**
@@ -99,10 +102,12 @@ export class MessageRecord extends Record implements RawMessage {
         return deleteReaction(this, typeof user === "string" ? user : user.id, emoji);
     }
 
+    /** Pins the message to the channel */
     public pin(): Promise<void> {
         return this.channel.pin(this);
     }
 
+    /** Unpins the message from the channel */
     public unpin(): Promise<void> {
         return this.channel.unpin(this);
     }

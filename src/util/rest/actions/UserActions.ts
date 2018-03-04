@@ -23,12 +23,12 @@ export function leaveGuild(user: string, guild: string): Promise<void> {
     return del({url: Endpoints.USER_GUILD(user, guild)}) as Promise<any>;
 }
 
-export function getDirectMessages(user: string): Promise<RawChannel> {
+export function getDirectMessages(user: string): Promise<RawChannel[]> {
     return get({url: Endpoints.USER_DIRECT_MESSAGES(user)}).then(res => res.body);
 }
 
-export function createDirectMessage(user: string, recipient: string): Promise<RawChannel> {
-    return post({url: Endpoints.USER_DIRECT_MESSAGES(user), body: {recipient}}).then(res => res.body);
+export function createDirectMessage(user: string, recipient_id: string): Promise<RawChannel> {
+    return post({url: Endpoints.USER_DIRECT_MESSAGES(user), body: {recipient_id}}).then(res => res.body);
 }
 
 export function createGroupDM(user: string, access_tokens: string[], nicks: {[key: string]: string}): Promise<RawChannel> {

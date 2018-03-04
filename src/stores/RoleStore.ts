@@ -1,7 +1,7 @@
 import { RoleRecord } from "../records/RoleRecord";
 import { Store } from "../types/structures/store";
 import { StoreManager } from "../util/StoreManager";
-import { GuildRoleCreateOrEditPayload, Payload, GuildRoleDeletePayload } from "../util/gateway/GatewayEvents";
+import { GuildRoleCreateOrEditPayload, Payload, GuildRoleDeletePayload, GuildCreatePayload, GuildDeletePayload } from "../util/gateway/GatewayEvents";
 import { Pending } from "../helpers/Pending";
 import { ActionType, ActionTypes } from "../types/structures/action";
 import { PublicDispatcher } from "../util/Dispatcher";
@@ -9,6 +9,7 @@ import { RawRole } from "../types/raw";
 import { GuildStore } from ".";
 import { getEntity } from "../util/HTTPUtils";
 import { Endpoints } from "../util/Constants";
+import { Analytics } from "../util/Analytics";
 
 const roles: Map<string, Map<string, RoleRecord>> = new Map();
 const waiter: Pending<RoleRecord> = new Pending();
@@ -22,8 +23,12 @@ export const RoleStore = new class implements Store<RoleRecord> {
         if (role) {
             return role as RoleRecord;
         } else if (guild && (role = await getEntity<RawRole>(Endpoints.GUILD_ROLE(guild as string, id)))) {
-            return handleRoleCreateOrUpdate({d: {...role, guild_id: guild}} as any, undefined, false);
+            return handleRoleCreateOrUpdate(role, guild, undefined, false);
         }
+    }
+
+    public get roles() {
+        return roles;
     }
 
     public once(id: string): Promise<RoleRecord> {
@@ -42,17 +47,24 @@ export async function recursiveRoleLookup(roleID: string): Promise<RoleRecord | 
 }
 
 function getOrCreateSection(id: string): Map<string, RoleRecord> {
-    return roles.get(id) || roles.set(id, new Map()).get(id) as Map<string, RoleRecord>;
+    let section: Map<string, RoleRecord> | undefined = roles.get(id);
+    if (section) {
+        return section;
+    }
+    section = new Map();
+    roles.set(id, section);
+    return section;
 }
 
-function handleRoleCreateOrUpdate(action: GuildRoleCreateOrEditPayload, type?: ActionType, dispatch: boolean = true): RoleRecord {
-    const role = action.d;
-    const section = getOrCreateSection(role.guild_id);
-    let roleRecord = section.get(role.role.id);
+function handleRoleCreateOrUpdate(role: RawRole, guild: string, type?: ActionType, dispatch: boolean = true): RoleRecord {
+    Analytics.debug("RoleStore", `Role update trigger: RID ${role.id} GID ${guild} Type? ${type}`);
+    const section = getOrCreateSection(guild);
+    let roleRecord = section.get(role.id);
     if (roleRecord) {
-        roleRecord.merge(action.d.role);
+        roleRecord.merge(role);
     } else {
-        roleRecord = new RoleRecord(action.d.role, role.guild_id);
+        roleRecord = new RoleRecord(role, guild);
+        section.set(roleRecord.id, roleRecord);
     }
     if (type && dispatch) {
         PublicDispatcher.dispatch({type, data: roleRecord});
@@ -61,6 +73,17 @@ function handleRoleCreateOrUpdate(action: GuildRoleCreateOrEditPayload, type?: A
         waiter.emit(roleRecord.id, roleRecord);
     }
     return roleRecord;
+}
+
+async function handleGuildCreate(action: GuildCreatePayload) {
+    for (const role of action.d.roles) {
+        handleRoleCreateOrUpdate(role, action.d.id);
+    }
+}
+
+async function handleGuildDelete(action: GuildDeletePayload) {
+    Analytics.debug("RoleStore", "Deleting role cluster for guild " + action.d.id)
+    roles.delete(action.d.id);
 }
 
 function handleRoleDelete(action: GuildRoleDeletePayload, dispatch: boolean = true) {

@@ -115,7 +115,7 @@ async function handleMessageDelete(message: RawMessage) {
     reallyDeleteMessage(message);
 }
 
-async function handleMessageCreate(message: RawMessage, dispatch: boolean = true): Promise<MessageRecord> {
+function handleMessageCreate(message: RawMessage, dispatch: boolean = true): MessageRecord {
     const messageRecord = new MessageRecord(message);
     waiter.emit(message.nonce || message.id, messageRecord);
     if (messageRecord.nonce) {
@@ -132,12 +132,17 @@ async function handleMessageCreate(message: RawMessage, dispatch: boolean = true
     return messageRecord;
 }
 
-async function handleMessageEdit(message: RawMessage) {
-    const messageRecord = getOrCreateSection(message).get(message.id);
+function handleMessageEdit(message: RawMessage, dispatch: boolean = true): MessageRecord {
+    let messageRecord = getOrCreateSection(message).get(message.id);
     if (messageRecord) {
         messageRecord.merge(message);
+    } else {
+        return handleMessageCreate(message, false);
     }
-    PublicDispatcher.dispatch({type: ActionTypes.MESSAGE_UPDATE, data: messageRecord || message});
+    if (dispatch) {
+        PublicDispatcher.dispatch({type: ActionTypes.MESSAGE_UPDATE, data: messageRecord || message});
+    }
+    return messageRecord;
 }
 
 async function handleChannelCreate(channel: RawChannel) {
@@ -158,18 +163,12 @@ async function handleChannelDelete(channel: RawChannel) {
     messages.delete(channel.id);
 }
 
-export async function mixedMessageInsert(messages: RawMessage[]): Promise<MessageRecord[]> {
+export async function mixedMessageInsert(messages: RawMessage[]): Promise<Map<string, MessageRecord>> {
     const waitRecords: Array<Promise<MessageRecord>> = [];
-    const records: MessageRecord[] = [];
+    const records: Map<string, MessageRecord> = new Map();
     for (const message of messages) {
-        if (!getOrCreateSection({id: message.channel_id}).has(message.id)) {
-            waitRecords.push(handleMessageCreate(message, false));
-        } else {
-            records.push(getOrCreateSection({id: message.channel_id}).get(message.id) as MessageRecord);
-        }
-    }
-    for (const message of await Promise.all(waitRecords)) {
-        records.push(message);
+        const exists = getOrCreateSection({id: message.channel_id}).has(message.id);
+        records.set(message.id, (exists ? handleMessageEdit : handleMessageCreate)(message, false));
     }
     return records;
 }

@@ -38,12 +38,7 @@ export class TextChannel extends GuildChannel implements TextBasedChannel {
      * @param query the query to use when fetching messages
      */
     public async fetchMessages(query: MessageFetchQuery) {
-        const messages = await mixedMessageInsert(Array.from((await fetchMessages(this.id, query)).values()));
-        const messageMap: Map<string, MessageRecord> = new Map();
-        for (const message of messages) {
-            messageMap.set(message.id, message);
-        }
-        return messageMap;
+        return await mixedMessageInsert(Array.from((await fetchMessages(this.id, query)).values()));
     }
 
     /**
@@ -82,12 +77,7 @@ export class TextChannel extends GuildChannel implements TextBasedChannel {
      * Gets the pinned messages for the channel
      */
     public async getPinnedMessages(): Promise<Map<string, MessageRecord>> {
-        const messages = await mixedMessageInsert(Array.from((await getPinnedMessages(this.id)).values()));
-        const messageMap: Map<string, MessageRecord> = new Map();
-        for (const message of messages) {
-            messageMap.set(message.id, message);
-        }
-        return messageMap;
+        return await mixedMessageInsert(Array.from((await getPinnedMessages(this.id)).values()));
     }
 
     /**

@@ -43,12 +43,7 @@ export class DMChannel extends ChannelRecord implements TextBasedChannel {
      * @param query 
      */
     public async fetchMessages(query: MessageFetchQuery) {
-        const messages = await mixedMessageInsert(Array.from((await fetchMessages(this.id, query)).values()));
-        const messageMap: Map<string, MessageRecord> = new Map();
-        for (const message of messages) {
-            messageMap.set(message.id, message);
-        }
-        return messageMap;
+        return await mixedMessageInsert(Array.from((await fetchMessages(this.id, query)).values()));
     }
 
     /**
@@ -88,12 +83,7 @@ export class DMChannel extends ChannelRecord implements TextBasedChannel {
      * Get the pinned messages in this channel
     */
     public async getPinnedMessages(): Promise<Map<string, MessageRecord>> {
-        const messages = await mixedMessageInsert(Array.from((await getPinnedMessages(this.id)).values()));
-        const messageMap: Map<string, MessageRecord> = new Map();
-        for (const message of messages) {
-            messageMap.set(message.id, message);
-        }
-        return messageMap;
+        return await mixedMessageInsert(Array.from((await getPinnedMessages(this.id)).values()));
     }
 
     /**

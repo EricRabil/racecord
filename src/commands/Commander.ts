@@ -3,6 +3,7 @@ import { GuildMemberRecord, UserRecord, GuildRecord, MessageRecord } from "../re
 import { TextChannel, DMChannel } from "../classes/channel";
 import { PublicDispatcher } from "../util/Dispatcher";
 import { EventEmitter } from "events";
+import { CommandBuilder, RacecordCommandBuilder } from "./CommandBuilder";
 
 export interface MessageEvent {
     delete(): Promise<void>;
@@ -32,29 +33,28 @@ export declare interface Commander {
     on(event: string, handler: (event: MessageEvent) => any): this;
 }
 
-export class Commander extends EventEmitter {
+/** A lightweight command utility */
+export class Commander {
 
-    private commands: {[key: string]: CommandHandler};
+    private commands: {[key: string]: CommandHandler} = {};
 
     public constructor(private prefix: string) {
-        super();
         PublicDispatcher.register(action => action.type === "MESSAGE_CREATE" && this.handleMessage(action.data));
-        this.on("message", event => {
-            const command = this.commands[event.command];
-            if (!command) {
-                return;
+    }
+
+    /**
+     * Register a command or commands with this commander
+     * @param commands the command(s)
+     */
+    public register(commands: Array<Command | RacecordCommandBuilder> | (Command | RacecordCommandBuilder)) {
+        if (!Array.isArray(commands)) {
+            commands = [commands];
+        }
+        for (let command of commands) {
+            if (command instanceof RacecordCommandBuilder) {
+                command = command.built;
             }
-            command(event, undefined as any);
-        });
-    }
-
-    public registerCommand(command: Command) {
-        this.registerCommands([command]);
-    }
-
-    public registerCommands(commands: Command[]) {
-        for (const command of commands) {
-            if (!command.opts.guards) {
+            if (!command.opts.guards || command.opts.guards.length === 0) {
                 this.commands[command.opts.name] = command.handler;
                 continue;
             }
@@ -62,9 +62,9 @@ export class Commander extends EventEmitter {
                 let current: number = 0;
                 let previous: any;
                 const next: () => void = () => {
-                    const guard = (command.opts.guards as CommandHandler[])[current++];
+                    const guard = ((command as Command).opts.guards as CommandHandler[])[current++];
                     if (!guard || previous === guard) {
-                        command.handler(event, undefined as any);
+                        (command as Command).handler(event, undefined as any);
                         return;
                     }
                     previous = guard;
@@ -75,12 +75,16 @@ export class Commander extends EventEmitter {
         }
     }
 
+    /**
+     * Handles a message event
+     * @param message the message event to handle
+     */
     private async handleMessage(message: MessageRecord) {
         if (!message.content.startsWith(this.prefix)) {
             return;
         }
         const [command, ...args] = message.content.substring(this.prefix.length).split(" ");
-        this.emit("message", {
+        this.dispatchMessage({
             delete: () => message.delete(),
             reply: (content: string, data?: SendableMessage) => message.channel.sendMessage({content, ...(data || {})}),
             success: () => message.react("🆗"),
@@ -92,5 +96,17 @@ export class Commander extends EventEmitter {
             guild: message.guild,
             message
         });
+    }
+
+    /**
+     * Dispatch a message to its command
+     * @param event the message
+     */
+    private async dispatchMessage(event: MessageEvent) {
+        const command = this.commands[event.command];
+        if (!command) {
+            return;
+        }
+        command(event, undefined as any);
     }
 }

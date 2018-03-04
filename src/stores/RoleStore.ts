@@ -76,9 +76,19 @@ function handleRoleDelete(action: GuildRoleDeletePayload, dispatch: boolean = tr
 StoreManager.register(RoleStore, action => {
     switch (action.type) {
         case ActionTypes.GUILD_ROLE_CREATE:
-            handleRoleCreateOrUpdate(action.payload as any, action.type, true);
+            handleRoleCreateOrUpdate((action as any).d.role, (action as any).d.guild_id, action.type, true);
+            break;
         case ActionTypes.GUILD_ROLE_UPDATE:
-            handleRoleCreateOrUpdate(action.payload as any, action.type, true);
+            handleRoleCreateOrUpdate((action as any).d.role, (action as any).d.guild_id, action.type, true);
+            break;
         case ActionTypes.GUILD_ROLE_DELETE:
+            handleRoleDelete(action.payload as any);
+            break;
+        case ActionTypes.GUILD_CREATE:
+            handleGuildCreate(action.payload as any);
+            break;
+        case ActionTypes.GUILD_DELETE:
+            handleGuildDelete(action.payload as any);
+            break;
     }
 });

@@ -14,7 +14,9 @@ export class VoiceGatewayConnection extends GatewayConnection {
             case VoiceOpcodes.HELLO:
                 (payload as HelloPayload).d.heartbeat_interval *= 0.75;
                 this.handleHello(payload as any);
+                break;
             case VoiceOpcodes.VOICE_READY:
+                break;
         }
     }
 

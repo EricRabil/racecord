@@ -14,6 +14,7 @@ Dispatcher.register((action) => {
     }
 })
 
+/** Tracks and dispatches to stores */
 export class StoreTracker {
 
     private _stores: Store<any>[] = [];

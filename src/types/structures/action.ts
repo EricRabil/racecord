@@ -15,17 +15,13 @@ export type ActionType = keyof typeof ActionTypes;
 
 export type ActionConsumer = (action: Action) => any;
 
-export type Action = BaseAction | MessageAction;
+export type Action = BaseAction;
 
 export interface BaseAction {
     type: ActionType;
+    /** Raw action payload, if coming from the gateway */
     payload?: Payload;
+    /** Data supplied by the action */
     data?: any;
     [key: string]: any;
-}
-
-export interface MessageAction extends BaseAction {
-    type: "MESSAGE_CREATE";
-    payload: MessageCreatePayload;
-    data: RawMessage | MessageRecord;
 }

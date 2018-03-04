@@ -45,6 +45,10 @@ export const UserStore = new class implements Store<UserRecord> {
     }
 }
 
+/**
+ * Called when a fresh user object is encountered, either by REST or otherwise.
+ * @param user the user that has been uptaken.
+ */
 export function addOrMergeUser(user: RawUser): UserRecord | undefined {
     if (!user) {
         return;

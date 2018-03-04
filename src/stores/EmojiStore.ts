@@ -13,15 +13,28 @@ const waiter: Pending<EmojiRecord> = new Pending();
 
 export const EmojiStore = new class implements Store<EmojiRecord> {
 
+    /**
+     * Returns all emojis for the given guild
+     * @param guild the guild ID
+     */
     public getEmojis(guild: string): Map<string, EmojiRecord> {
         return guildEmojis.get(guild) as Map<string, EmojiRecord>;
     }
 
+    /**
+     * Returns an emoji within a given guild
+     * @param guild the guild ID
+     * @param emoji the emoji ID
+     */
     public getEmoji(guild: string, emoji: string): EmojiRecord | undefined {
         const emojiMap = guildEmojis.get(guild);
         return emojiMap && emojiMap.get(emoji);
     }
 
+    /**
+     * Locates an emoji without the guild ID (possible performance hit when there's a lot of guilds/emojis)
+     * @param id the guild ID
+     */
     public async locateEmoji(id: string): Promise<EmojiRecord | undefined> {
         for (const [, guildStore] of guildEmojis) {
             for (const [, emoji] of guildStore) {

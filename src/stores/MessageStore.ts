@@ -89,6 +89,10 @@ async function merge(message: Partial<MessageRecord>) {
     original.merge(message);
 }
 
+/**
+ * Deletes a message regardless of settings configuration
+ * @param message the message to delete
+ */
 async function reallyDeleteMessage(message: Partial<RawMessage>) {
     const {id, channel_id} = message;
     if (!id || !channel_id) {
@@ -101,6 +105,10 @@ async function reallyDeleteMessage(message: Partial<RawMessage>) {
     section.delete(id);
 }
 
+/**
+ * Handles a message delete event. Depending on the settings configuration, the message may be retained in storage but flagged as removed.
+ * @param message the message
+ */
 async function handleMessageDelete(message: RawMessage) {
     const section = messages.get(message.channel_id);
     if (section) {
@@ -163,6 +171,13 @@ async function handleChannelDelete(channel: RawChannel) {
     messages.delete(channel.id);
 }
 
+/**
+ * Called whenever a fresh array of messages are encountered, either from REST or otherwise.
+ * 
+ * Creates or updates records for all of the provided messages, returning a MessageRecord map.
+ * @private
+ * @param messages the raw message array
+ */
 export async function mixedMessageInsert(messages: RawMessage[]): Promise<Map<string, MessageRecord>> {
     const waitRecords: Array<Promise<MessageRecord>> = [];
     const records: Map<string, MessageRecord> = new Map();

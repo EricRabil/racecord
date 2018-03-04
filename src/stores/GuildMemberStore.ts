@@ -31,10 +31,18 @@ export const GuildMemberStore = new class implements Store<GuildMemberRecord> {
         return members;
     }
 
+    /**
+     * A map of member ID to member records
+     */
     public get memberMap() {
         return guildMembers;
     }
 
+    /**
+     * Gets a member from the stores with the given guild and ID
+     * @param guild the guild ID
+     * @param member the member ID
+     */
     public getMember(guild: string, member: string): GuildMemberRecord | undefined {
         return getOrCreateSection(guild).get(member);
     }
@@ -48,6 +56,10 @@ export const GuildMemberStore = new class implements Store<GuildMemberRecord> {
         return guildMembers.get(id) as Map<string, GuildMemberRecord>;
     }
 
+    /**
+     * Gets all members for a given user
+     * @param user the user ID
+     */
     public membersForUser(user: string): Map<string, GuildMemberRecord> {
         const memberMap: Map<string, GuildMemberRecord> = new Map();
         for (const [guildID, memberStore] of guildMembers) {
@@ -81,6 +93,17 @@ export const GuildMemberStore = new class implements Store<GuildMemberRecord> {
     }
 }
 
+/**
+ * Used to insert or update a member record with a raw member record.
+ * 
+ * Called whenever a fresh member record is encountered, either through REST or gateway.
+ * 
+ * @private
+ * @param member the raw member to merge/create
+ * @param guild the guild ID, if any. If it is not provided and there is no extra guild parameter in the member object, the function will not proceed.
+ * @param type the action type, used for event re-dispatching.
+ * @param dispatch whether we should actually re-dispatch.
+ */
 export function handleGuildMemberAddOrUpdate(member: RawGuildMember, guild?: string, type?: ActionType, dispatch: boolean = true): GuildMemberRecord | undefined {
     if (!guild) {
         const extraParam = (member as any).guild_id;
@@ -113,6 +136,11 @@ function getOrCreateSection(id: string): Map<string, GuildMemberRecord> {
     return guildMembers.get(id) || guildMembers.set(id, new Map()).get(id) as Map<string, GuildMemberRecord>;
 }
 
+/**
+ * Takes an array of raw members and creates/updates them as well as returns a map of them.
+ * @param guild the guild ID
+ * @param members the array of raw members
+ */
 export function mixedMemberInsert(guild: string, members: RawGuildMember[]): Map<string, GuildMemberRecord> {
     const section = getOrCreateSection(guild);
     const sorted: Map<string, GuildMemberRecord> = new Map();

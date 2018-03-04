@@ -1,3 +1,7 @@
+/**
+ * Patches superagent to include the authorization token when communicating with DAPI
+ */
+
 import * as superagent from "superagent";
 import { Constants } from "../Constants";
 import { SettingsStore } from "../../stores/SettingsStore";

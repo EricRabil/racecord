@@ -1,15 +1,7 @@
 /**
- * Backoff spec
- * 
- * Passes a minimum wait time, and an optional maximum wait time to the constructor. If the maximum is ommitted, it is the minimum wait time multiplied by ten
- * 
- * The method called when an API request bounces does the following:
- * (callback) -> 
- *    Increment fail count
- *    Computed delay offset is the current delay times two
- *    Set the current delay to either the maximum timeout or the delay with the offset, whichever one is smaller
+ * @private
+ * Used for graceful ratelimit handling
  */
-
 export class Backoff {
 
     private fails: number = 0;
@@ -23,10 +15,18 @@ export class Backoff {
         this._delay = this.minimum;
     }
 
+    /**
+     * Is this backoff already running
+     */
     public get processing(): boolean {
         return this.timeoutID !== undefined;
     }
 
+    /**
+     * Initiates a backoff that will end in x milliseconds
+     * @param func the callback
+     * @param delay the delay, in ms
+     */
     public delay(func: () => any, delay?: number): void {
         if (this.timeoutID) {
             throw new Error("Backoff is already in process");

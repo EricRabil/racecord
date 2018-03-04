@@ -34,6 +34,9 @@ export interface SocketEvent {
     target: ws;
 }
 
+/** 
+ * A socket connection "kernel", manages communication and compression
+ * */
 export class SocketConnection extends EventEmitter {
     private ws: ws;
     private closing: boolean;

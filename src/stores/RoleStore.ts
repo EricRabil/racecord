@@ -36,6 +36,10 @@ export const RoleStore = new class implements Store<RoleRecord> {
     }
 }
 
+/**
+ * Recursively finds a role without its guild ID, possible performance hit with a lot of guilds or a lot of roles.
+ * @param roleID the role to search for
+ */
 export async function recursiveRoleLookup(roleID: string): Promise<RoleRecord | undefined> {
     for (const [,roleSection] of roles) {
         for (const [,role] of roleSection) {

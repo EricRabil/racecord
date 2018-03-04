@@ -1,7 +1,7 @@
 import {Embed} from "../../raw/RawMessage";
 
 export interface SendableMessage {
-    content: string;
+    content?: string;
     nonce?: string;
     tts?: boolean;
     embed?: Partial<Embed>;

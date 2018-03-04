@@ -34,48 +34,48 @@ export interface RawMessage {
 }
 
 export interface EmbedAsset {
-    url: string;
-    height: number;
-    width: number;
+    url?: string;
+    height?: number;
+    width?: number;
 }
 
 export interface EmbedImage extends EmbedAsset {
-    proxy_url: string;
+    proxy_url?: string;
 }
 
 export interface EmbedIcon {
-    icon_url: string;
-    proxy_icon_url: string;
+    icon_url?: string;
+    proxy_icon_url?: string;
 }
 
 export interface EmbedField {
-    name: string;
-    value: string;
-    inline: boolean;
+    name?: string;
+    value?: string;
+    inline?: boolean;
 }
 
 export interface Embed {
-    title: string;
-    type: "rich";
-    description: string;
-    url: string;
-    timestamp: string;
-    color: number;
-    footer: {
-        text: string;
-        icon_url: string;
-        proxy_icon_url: string;
+    title?: string;
+    type?: "rich";
+    description?: string;
+    url?: string;
+    timestamp?: string;
+    color?: number;
+    footer?: {
+        text?: string;
+        icon_url?: string;
+        proxy_icon_url?: string;
     };
-    image: EmbedImage;
-    thumbnail: EmbedImage;
-    video: EmbedAsset;
-    provider: {
-        name: string;
-        url: string;
+    image?: EmbedImage;
+    thumbnail?: EmbedImage;
+    video?: EmbedAsset;
+    provider?: {
+        name?: string;
+        url?: string;
     };
-    author: EmbedIcon & {
-        url: string;
-        name: string;
+    author?: EmbedIcon & {
+        url?: string;
+        name?: string;
     };
-    fields: EmbedField[];
+    fields?: EmbedField[];
 }

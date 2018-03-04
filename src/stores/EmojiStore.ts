@@ -69,6 +69,6 @@ StoreManager.register(EmojiStore, action => {
     switch (action.type) {
         case ActionTypes.GUILD_EMOJIS_UPDATE:
             const updatePayload = action.payload as GuildEmojisUpdatePayload;
-            
+            break;
     }
 });

@@ -16,6 +16,7 @@ export class BanRecord extends Record implements RawBan {
         this.readonly("guild", () => GuildStore.guilds.get(guild.id));
     }
 
+    /** Removes this ban */
     public pardonBan(): Promise<void> {
         return removeBan(this.guild.id, this.user.id);
     }

@@ -35,6 +35,10 @@ export const GuildMemberStore = new class implements Store<GuildMemberRecord> {
         return guildMembers;
     }
 
+    public getMember(guild: string, member: string): GuildMemberRecord | undefined {
+        return getOrCreateSection(guild).get(member);
+    }
+
     /**
      * Returns a map of all tracked members in a guild
      * @param guild the guild ID

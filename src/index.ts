@@ -16,8 +16,7 @@ import * as MiscUtils from './util/MiscUtils';
 import * as HTTPUtils from './util/HTTPUtils';
 import {AnalyticUtils, Analytics} from "./util/Analytics";
 import {Backoff} from "./util/rest/Backoff";
-import * as ChannelActions from './util/rest/actions/ChannelActions';
-import * as MessageActions from './util/rest/actions/MessageActions';
+import * as Actions from "./util/rest/actions";
 import * as SocketConstants from './util/gateway/SocketConstants';
 import * as SocketConnection from './util/gateway/SocketConnection';
 import * as GatewayEvents from './util/gateway/GatewayEvents';
@@ -31,15 +30,24 @@ import { SendableMessage, MessageEdit } from "./types/discord/channel/message";
 import { Client } from './classes/Client';
 import { Overwrite } from './types/discord/channel/overwrite';
 import { RawInvite } from './types/raw/RawInvite';
-import { Commander } from './commands/Commander';
+import { Commander, MessageEvent } from './commands/Commander';
+import * as CommandSuite from './commands/CommandBuilder';
+import * as ChannelActions from './util/rest/actions/ChannelActions';
+import * as MessageActions from './util/rest/actions/MessageActions';
+import * as GuildActions from './util/rest/actions/GuildActions';
+import * as InviteActions from './util/rest/actions/InviteActions';
+import * as VoiceActions from './util/rest/actions/VoiceActions';
+import * as UserActions from './util/rest/actions/UserActions';
+import * as WebhookActions from './util/rest/actions/WebhookActions';
+import * as EmojiActions from './util/rest/actions/EmojiActions';
+import * as Guards from "./commands/guards";
+import { SelfUser } from './classes/SelfUser';
 
-Dispatcher.register((action) => {
-    switch (action.type) {
-        case ActionTypes.DEBUG:
-            console.log(`[${action.context.toUpperCase()}] ${action.data}`);
-            break;
+Dispatcher.register(action => {
+    if (action.type === ActionTypes.DEBUG) {
+        console.log(`[${action.context.toUpperCase()}] ${action.data}`)
     }
-});
+})
 
 /**
  * We don't use the key shorthand to prevent TypeScript magic renaming
@@ -47,37 +55,38 @@ Dispatcher.register((action) => {
  * We expose internal variables and classes to make the library as usable and customizable as possible.
  */
 export = {
-    ActionTypes: ActionTypes,
-    Dispatcher: PublicDispatcher,
-    HTTPUtils: HTTPUtils,
-    Client: Client,
+    actionTypes: ActionTypes,
+    dispatcher: PublicDispatcher,
+    httpUtils: HTTPUtils,
+    client: Client,
     Commander: Commander,
-    StoreManager: StoreManager,
-    ...Channels,
-    Stores: {
+    commands: {
+        guards: {
+            ...Guards,
+        },
+        ...CommandSuite,
+    },
+    storeManager: StoreManager,
+    stores: {
         ...Stores,
     },
     internal: {
         actions: {
-            channel: {
-                ...ChannelActions,
-            },
-            message: {
-                ...MessageActions
-            }
+            ...Actions,
         },
-        Analytics: Analytics,
+        analytics: Analytics,
         AnalyticUtils: AnalyticUtils,
         Backoff: Backoff,
-        GatewayConnection: GatewayConnection,
-        GatewayEvents: GatewayEvents,
-        InternalDispatcher: Dispatcher,
+        gatewayConnection: GatewayConnection,
+        gatewayEvents: GatewayEvents,
+        internalDispatcher: Dispatcher,
         RacecordDispatcher: RacecordDispatcher,
         Record: Record,
-        Records: Records,
+        records: {SelfUser: SelfUser, ...Records},
         StoreTracker: StoreTracker,
-        MiscUtils: MiscUtils,
+        miscUtils: MiscUtils,
         SocketConnection: SocketConnection,
-        SocketConstants: SocketConstants,
+        socketConstants: SocketConstants,
+        wrappers: {...Channels}
     },
 };

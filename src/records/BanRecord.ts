@@ -11,7 +11,7 @@ export class BanRecord extends Record implements RawBan {
 
     public constructor(data: RawBan, guild: RawGuild) {
         super();
-        this.merge(data);
+        this.assign(data);
         this.readonly("user", () => UserStore.getUser(data.user.id));
         this.readonly("guild", () => GuildStore.guilds.get(guild.id));
     }

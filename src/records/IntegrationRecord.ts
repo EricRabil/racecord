@@ -4,6 +4,6 @@ import { RawIntegration } from "../types/raw";
 export class IntegrationRecord extends Record {
     public constructor(data: RawIntegration) {
         super();
-        this.merge(data);
+        this.assign(data);
     }
 }

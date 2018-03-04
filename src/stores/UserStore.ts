@@ -8,6 +8,7 @@ import { RawGuild } from "../types/raw/RawGuild";
 import { getEntity } from "../util/HTTPUtils";
 import { Endpoints } from "../util/Constants";
 import { Pending } from "../helpers/Pending";
+import { SelfUser } from "../classes/SelfUser";
 
 const users: Map<string, UserRecord> = new Map();
 let currentUserId: string;
@@ -26,8 +27,8 @@ export const UserStore = new class implements Store<UserRecord> {
     /**
      * Gets the current user
      */
-    public getCurrentUser(): UserRecord {
-        return users.get(currentUserId) as UserRecord;
+    public getCurrentUser(): SelfUser {
+        return users.get(currentUserId) as SelfUser;
     }
 
     public async findOrCreate(id: string): Promise<UserRecord | undefined> {
@@ -44,13 +45,13 @@ export const UserStore = new class implements Store<UserRecord> {
     }
 }
 
-function addOrMergeUser(user: RawUser): UserRecord | undefined {
+export function addOrMergeUser(user: RawUser): UserRecord | undefined {
     if (!user) {
         return;
     }
     let userRecord = users.get(user.id);
     if (!userRecord) {
-        userRecord = new UserRecord(user);
+        userRecord = new (user.id === currentUserId ? SelfUser : UserRecord)(user);
         waiter.emit(userRecord.id, userRecord);
         users.set(user.id, userRecord);
     } else {

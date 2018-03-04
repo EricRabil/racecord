@@ -1,32 +1,61 @@
 const racecord = require("../lib");
+const {commands} = racecord;
+const {CommandBuilder} = commands;
+const perf = require("perf_hooks");
 const readline = require("readline-sync");
-const MessageRecord = racecord.internal.Records.MessageRecord;
-const ActionTypes = racecord.ActionTypes;
+const MessageRecord = racecord.internal.records.MessageRecord;
+const ActionTypes = racecord.actionTypes;
+const util = require("util");
 
-racecord.Client.connect(readline.question("token\n"));
+racecord.client.connect(readline.question("token\n"));
 
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const microTime = () => {
+    var hrTime = process.hrtime()
+    return hrTime[0] * 1000000 + hrTime[1] / 1000;
+}
 
-racecord.Dispatcher.register(action => {
+const times = {};
+racecord.internal.internalDispatcher.register(action => {
     switch (action.type) {
-        case ActionTypes.MESSAGE_CREATE:
-            const message = action.data;
-            if (message.content === "=ping" && message instanceof MessageRecord) {
-                message.channel.sendMessage({content: "Pong!"}).then(newMessage => {
-                    setTimeout(() => {
-                        newMessage.edit({content: "Pong!!!1"}).then(() => {
-                            setTimeout(() => {
-                                newMessage.delete();
-                            }, 2000);
-                        });
-                    }, 2000);
-                });
-                message.react("🆗").then(() => {
-                    setTimeout(() => {
-                        message.removeOwnReaction("🆗");
-                    }, 2000);
-                });
-            }
-            break;
+        case "MESSAGE_CREATE":
+            times[action.data.id] = microTime()
     }
 });
+
+const commander = new racecord.Commander("=");
+const pingCommand = CommandBuilder.name("ping").handler(e => {
+    let pongText = `pong\nracecord (time from gateway to command): ${microTime() - times[e.message.id]}us\ndiscord: \`plox wait im thinking bitch\``;
+    const preEdit = Date.now();
+    e.reply(pongText).then(newMessage => {
+        const editedTimestamp = new Date(newMessage.timestamp).getTime();
+        const editedTime = preEdit - editedTimestamp;
+        pongText = pongText.substring(0, pongText.indexOf("plox")) + `${editedTime}ms\``;
+        newMessage.edit({content: pongText});
+    });
+});
+const ping2Command = {
+    opts: {
+        name: "ping2"
+    },
+    handler: e => e.reply("pong")
+}
+const evalCommand = CommandBuilder.name("eval").handler(async e => {
+    try {
+        const result = util.inspect(await eval(e.args.join(" ")), true, 0);
+        if (result.length > 1900) {
+            const splits = result.match(/[\s\S]{1,1900}/);
+            console.log(splits[0]);
+            splits.forEach(split => e.reply(`\`\`\`js\n${split}\`\`\``));
+            return;
+        }
+        e.reply(`\`\`\`js\n${result}\`\`\``);
+    } catch (result) {
+        result = util.inspect(result, true, 0);
+        if (result.length > 1900) {
+            const splits = result.match(/[\s\S]{1,1900}/);
+            splits.forEach(split => e.reply(`\`\`\`js\n${split}\`\`\``));
+        }
+        e.reply(`\`\`\`js\n${result}\`\`\``);
+    }
+}).use(racecord.commands.guards.UserGuard(["163024083364216832"]));
+commander.register([pingCommand, ping2Command, evalCommand]);

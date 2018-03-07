@@ -37,18 +37,16 @@ export const MessageStore = new class implements Store<MessageRecord> {
         pendingNonces.set(nonce, callback);
     }
 
-    public async findMessage(id: string, channel?: string): Promise<MessageRecord | undefined> {
-        for (const [, messageStore] of channel ? [messages.get(channel) || []] : messages) {
-            for (const [, message] of messageStore as Map<string, MessageRecord>) {
-                if (message.id === id) {
-                    return message;
-                }
+    public async findMessage(id: string, channel: string): Promise<MessageRecord | undefined> {
+        for (const [, message] of getOrCreateSection({id: channel})) {
+            if (message.id === id) {
+                return message;
             }
         }
     }
 
     public async findOrCreate(id: string, channel?: string): Promise<MessageRecord | undefined> {
-        let message: RawMessage | MessageRecord | undefined = await this.findMessage(id, channel);
+        let message: RawMessage | MessageRecord | undefined = await this.findMessage(id, channel as string);
         if (message) {
             return message as MessageRecord;
         } else if (channel && (message = await getEntity<RawMessage>(Endpoints.MODIFY_MESSAGE(channel, id)))) {
@@ -140,12 +138,12 @@ function handleMessageCreate(message: RawMessage, dispatch: boolean = true): Mes
     return messageRecord;
 }
 
-function handleMessageEdit(message: RawMessage, dispatch: boolean = true): MessageRecord {
+async function handleMessageEdit(message: RawMessage, dispatch: boolean = true): Promise<MessageRecord> {
     let messageRecord = getOrCreateSection(message).get(message.id);
     if (messageRecord) {
         messageRecord.merge(message);
     } else {
-        return handleMessageCreate(message, false);
+        return await MessageStore.findOrCreate(message.id, message.channel_id) as MessageRecord;
     }
     if (dispatch) {
         PublicDispatcher.dispatch({type: ActionTypes.MESSAGE_UPDATE, data: messageRecord || message});
@@ -183,7 +181,7 @@ export async function mixedMessageInsert(messages: RawMessage[]): Promise<Map<st
     const records: Map<string, MessageRecord> = new Map();
     for (const message of messages) {
         const exists = getOrCreateSection({id: message.channel_id}).has(message.id);
-        records.set(message.id, (exists ? handleMessageEdit : handleMessageCreate)(message, false));
+        records.set(message.id, await (exists ? handleMessageEdit : handleMessageCreate)(message, false));
     }
     return records;
 }

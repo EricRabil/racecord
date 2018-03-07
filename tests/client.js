@@ -4,6 +4,7 @@ const {CommandBuilder} = commands;
 const perf = require("perf_hooks");
 const readline = require("readline-sync");
 const MessageRecord = racecord.MessageRecord;
+const {ChannelRecord} = racecord;
 const ActionTypes = racecord.actionTypes;
 const util = require("util");
 
@@ -41,7 +42,9 @@ const pingCommand = CommandBuilder.name("ping").handler(e => {
  * INDEX 1: BOOLEAN - NAME: IS QUEEN - DESCRIPTION: IS YOU A QUEEN
  * INDEX 2: NUMBER
  */
-const argumentedCommand = CommandBuilder.name("argumented").args(String, {type: Boolean, name: "Is Queen", description: "Is you a queen?"}, Number).handler(e => e.reply("success"));
+const argumentedCommand = CommandBuilder.name("argumented").args(String, Number, Boolean, racecord.UserRecord, ChannelRecord, racecord.GuildMemberRecord, racecord.GuildRecord, {type: c => c.includes("69"), name: "Includes 69"}).handler(e => {
+    e.reply(`\`\`\`js\n${util.inspect(e.args, true, 1)}\`\`\``);
+});
 
 const ping2Command = {
     opts: {

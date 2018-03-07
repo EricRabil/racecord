@@ -16,8 +16,11 @@ const findFuzzy: <T>(list: T[], scorer: (item: T) => number) => Promise<T | unde
     return list[highestIndex as any];
 };
 
-const nameComparator: (provided: string, keyOverride?: string) => ((item: {[key: string]: any}) => number) = provided => (item, keyOverride = "name") => {
+const nameComparator: (provided: string, keyOverride?: string) => ((item: {[key: string]: any}) => number) = (provided, keyOverride = "name") => (item) => {
     let score = 0;
+
+    console.log(keyOverride);
+    console.log(item);
 
     if (provided === item[keyOverride]) {
         score += 10;
@@ -28,6 +31,8 @@ const nameComparator: (provided: string, keyOverride?: string) => ((item: {[key:
 
     return score;
 }
+
+const trueKeywords: string[] = ["true", "yes", "1", "y", "t"];
 
 async function validate(arg: StructuredArgument & {_isCustomFunction?: boolean}, event: MessageEvent, provided: string): Promise<CommandArgument | null | undefined> {
     if (!provided) {
@@ -50,7 +55,7 @@ async function validate(arg: StructuredArgument & {_isCustomFunction?: boolean},
             }
             return (provided as any) * 1;
         case Boolean:
-            return Boolean(provided);
+            return trueKeywords.includes(provided.toLowerCase());
         case UserRecord:
             let user: UserRecord | undefined;
             if (fuzzy) {
@@ -182,7 +187,7 @@ export const ArgumentParser: (opts?: {silentFail?: boolean}) => CommandMiddlewar
         }
     }
     
-    for (let i = 0; i < ((providedArgs.length > args.length) ? providedArgs.length : args.length); i++) {
+    for (let i = 0; i < args.length; i++) {
         const arg = args[i];
         if (arg.infinite) {
             await parseRemaining(i, arg);
@@ -205,7 +210,7 @@ export const ArgumentParser: (opts?: {silentFail?: boolean}) => CommandMiddlewar
                 const recordIndex = decoratedType.indexOf("Record");
                 decoratedType = decoratedType.substring(0, recordIndex);
             }
-            const argumentName = `(Arg. #${index + 1}) ${item.name ? item.name : "Untitled"}${decoratedType ? `: ${decoratedType}` : ""}`;
+            const argumentName = `(Arg. #${(index as any * 1) + 1})${item.name ? ` ${item.name}` : ""}${decoratedType ? ` [${decoratedType}]` : ""}`;
             fields.push({name: argumentName, value: item.description || "\u200b", inline: false});
         }
         console.log(fields);

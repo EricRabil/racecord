@@ -81,7 +81,15 @@ export class Commander {
         if (!message.content.startsWith(this.prefix)) {
             return;
         }
-        const [command, ...args] = message.content.substring(this.prefix.length).split(" ");
+        const res = message.content.substring(this.prefix.length).match(/\w+|"[^"]*"/g);
+        if (res === null) {
+            return;
+        }
+        const [command, ...args] = res;
+        for (let i = 0; i < args.length; i++) {
+            let arg = args[i];
+            if (arg.startsWith('"') && arg.endsWith('"')) args[i] = arg.substring(1, arg.length - 1);
+        }
         this.dispatchMessage({
             delete: () => message.delete(),
             reply: (content: string, data?: SendableMessage) => message.channel.sendMessage({content, ...(data || {})}),

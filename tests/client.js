@@ -41,7 +41,7 @@ const pingCommand = CommandBuilder.name("ping").handler(e => {
  * INDEX 1: BOOLEAN - NAME: IS QUEEN - DESCRIPTION: IS YOU A QUEEN
  * INDEX 2: NUMBER
  */
-const argumentedCommand = CommandBuilder.name("argumented").args(String, {type: Boolean, name: "Is Queen", description: "Is you a queen?"}, Number);
+const argumentedCommand = CommandBuilder.name("argumented").args(String, {type: Boolean, name: "Is Queen", description: "Is you a queen?"}, Number).handler(e => e.reply("success"));
 
 const ping2Command = {
     opts: {
@@ -68,4 +68,5 @@ const evalCommand = CommandBuilder.name("eval").handler(async e => {
         e.reply(`\`\`\`js\n${result}\`\`\``);
     }
 }).use(racecord.commands.guards.UserGuard(["163024083364216832"]));
-commander.register([pingCommand, ping2Command, evalCommand]);
+commander.use(racecord.commands.middleware.ArgumentParser());
+commander.register([pingCommand, ping2Command, evalCommand, argumentedCommand]);

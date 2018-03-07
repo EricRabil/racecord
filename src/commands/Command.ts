@@ -20,17 +20,18 @@ export type CommandHandler = (messageEvent: MessageEvent, next: () => void) => v
 export type CommandMiddleware = (messageEvent: MessageEvent, command: CommandMetadata, next: () => void) => void;
 
 export type ClassOf<T> = new(...args: any[]) => T;
-export type RawArgumentType = ClassOf<String> | ClassOf<Number> | ClassOf<Boolean> | ClassOf<UserRecord> | ClassOf<ChannelRecord> | ClassOf<GuildMemberRecord> | ClassOf<GuildRecord> | ((arg: string) => boolean);
-export type Argument = {
+export type RawArgument = ClassOf<String> | ClassOf<Number> | ClassOf<Boolean> | ClassOf<UserRecord> | ClassOf<ChannelRecord> | ClassOf<GuildMemberRecord> | ClassOf<GuildRecord> | ((arg: string) => boolean);
+export interface StructuredArgument {
     name?: string;
     description?: string;
     optional?: boolean;
     infinite?: boolean;
     type: ClassOf<String> | ClassOf<Number> | ClassOf<Boolean> | ClassOf<UserRecord> | ClassOf<ChannelRecord> | ClassOf<GuildMemberRecord> | ClassOf<GuildRecord> | ((arg: string) => boolean);
-} | RawArgumentType;
+}
+export type Argument = StructuredArgument | RawArgument;
 
-export function isRawType(arg: Argument): arg is RawArgumentType {
-    return !((arg as any).prototype);
+export function isRawType(arg: Argument): arg is RawArgument {
+    return !!(arg as any).prototype;
 }
 
 export interface Command {

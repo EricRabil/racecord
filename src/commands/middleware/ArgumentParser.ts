@@ -1,4 +1,4 @@
-import { CommandMiddleware, Argument, CommandArgument, MessageEvent, isRawType } from "../Command";
+import { CommandMiddleware, Argument, CommandArgument, MessageEvent, isRawType, StructuredArgument } from "../Command";
 import { UserRecord, ChannelRecord, GuildMemberRecord, GuildRecord } from "../../records";
 import { UserStore, ChannelStore, GuildStore } from "../../stores";
 import { EmbedField } from "../../types/raw";
@@ -29,9 +29,16 @@ const nameComparator: (provided: string, keyOverride?: string) => ((item: {[key:
     return score;
 }
 
-async function validate(arg: Argument & {_isCustomFunction?: boolean}, event: MessageEvent, provided: string): Promise<CommandArgument | null | undefined> {
-    const type = isRawType(arg) ? arg : arg.type;
-    const optional = isRawType(arg) ? false : arg.optional;
+async function validate(arg: StructuredArgument & {_isCustomFunction?: boolean}, event: MessageEvent, provided: string): Promise<CommandArgument | null | undefined> {
+    if (!provided) {
+        if (!arg.optional) {
+            return null;
+        } else {
+            return;
+        }
+    }
+    const type = arg.type;
+    const optional = arg.optional;
     const fuzzy = isNaN(provided as any);
     arg._isCustomFunction = false;
     switch (type) {
@@ -134,20 +141,27 @@ async function validate(arg: Argument & {_isCustomFunction?: boolean}, event: Me
  * @param opts specify whether imparsable arguments should silently fail or should block command execution (useful for optional object retrieval)
  */
 export const ArgumentParser: (opts?: {silentFail?: boolean}) => CommandMiddleware = (opts) => async (event, command, next) => {
-    const {args} = command;
+    const args: StructuredArgument[] | undefined = command.args as StructuredArgument[] | undefined;
     const providedArgs = event.args as string[];
     if (!args) {
         next();
         return;
     }
 
-    const invalid: {[key: number]: Argument & {_isCustomFunction?: boolean}} = {};
+    for (let i = 0; i < args.length; i++) {
+        const arg = args[i];
+        if (isRawType(arg)) {
+            args[i] = {type: arg};
+        }
+    }
+
+    const invalid: {[key: number]: StructuredArgument & {_isCustomFunction?: boolean}} = {};
     const parsedArguments: CommandArgument[] = [];
 
-    const parseArgument = async (index: number, arg: Argument) => {
+    const parseArgument = async (index: number, arg: StructuredArgument) => {
         const provided = providedArgs[index];
         const fuzzy = isNaN(provided as any);
-        if (!provided && !(isRawType(arg) ? false : arg.optional)) {
+        if (!provided && arg.optional) {
             invalid[index] = arg;
             return;
         }
@@ -162,19 +176,19 @@ export const ArgumentParser: (opts?: {silentFail?: boolean}) => CommandMiddlewar
         }
     }
 
-    const parseRemaining = async (startingIndex: number, arg: Argument) => {
-        for (let i = startingIndex; i < args.length; i++) {
+    const parseRemaining = async (startingIndex: number, arg: StructuredArgument) => {
+        for (let i = startingIndex; i < providedArgs.length; i++) {
             parseArgument(i, arg);
         }
     }
     
-    for (let i = 0; i < args.length; i++) {
+    for (let i = 0; i < ((providedArgs.length > args.length) ? providedArgs.length : args.length); i++) {
         const arg = args[i];
-        if (isRawType(arg) ? false : arg.infinite) {
+        if (arg.infinite) {
             await parseRemaining(i, arg);
             break;
         }
-        parseArgument(i, arg);
+        await parseArgument(i, arg);
     }
 
     event.args = parsedArguments;

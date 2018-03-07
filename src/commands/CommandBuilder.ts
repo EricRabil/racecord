@@ -1,4 +1,4 @@
-import { CommandHandler, Command, Argument } from "./Commander";
+import { CommandHandler, Command, Argument, StructuredArgument } from "./Commander";
 import { GuildRecord, ChannelRecord, UserRecord, GuildMemberRecord } from "../records";
 
 export class RacecordCommandBuilder {
@@ -20,7 +20,7 @@ export class RacecordCommandBuilder {
      * Adds argument definitions to this command
      * @param arg the argument definitions
      */
-    public args(arg: Argument | Argument[]) {
+    public args(...arg: Argument[]) {
         this._args = this._args.concat(arg);
         return this;
     }
@@ -88,7 +88,7 @@ export const CommandBuilder = {
      * Adds argument definitions to this command
      * @param arg the argument definitions
      */
-    args(arg: Argument | Argument[]) {
-        return new RacecordCommandBuilder().args(arg);
+    args(...arg: Argument[]) {
+        return new RacecordCommandBuilder().args(...arg);
     }
 }

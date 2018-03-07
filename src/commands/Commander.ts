@@ -22,7 +22,7 @@ export class Commander {
 
     private commandHandlers: {[key: string]: CommandHandler} = {};
     private commandMetadata: {[key: string]: CommandMetadata} = {};
-    private middleware: CommandMiddleware[];
+    private middleware: CommandMiddleware[] = [];
 
     public constructor(private prefix: string) {
         PublicDispatcher.register(action => action.type === "MESSAGE_CREATE" && this.handleMessage(action.data));
@@ -44,6 +44,7 @@ export class Commander {
             if (command instanceof RacecordCommandBuilder) {
                 command = command.built;
             }
+            this.commandMetadata[command.opts.name] = command.opts;
             if (!command.opts.guards || command.opts.guards.length === 0) {
                 this.commandHandlers[command.opts.name] = command.handler;
                 continue;
@@ -62,7 +63,6 @@ export class Commander {
                 }
                 next();
             };
-            this.commandMetadata[command.opts.name] = command.opts;
         }
     }
 

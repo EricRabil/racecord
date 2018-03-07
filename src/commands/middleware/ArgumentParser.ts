@@ -3,6 +3,11 @@ import { UserRecord, ChannelRecord, GuildMemberRecord, GuildRecord } from "../..
 import { UserStore, ChannelStore, GuildStore } from "../../stores";
 import { EmbedField } from "../../types/raw";
 
+/**
+ * Finds a record using a partial name or ID
+ * @param list the list of records
+ * @param scorer the scorer function
+ */
 const findFuzzy: <T>(list: T[], scorer: (item: T) => number) => Promise<T | undefined> = async (list, scorer) => {
     const scores: {[key: number]: number} = {};
     for (let i = 0; i < list.length; i++) {
@@ -16,6 +21,12 @@ const findFuzzy: <T>(list: T[], scorer: (item: T) => number) => Promise<T | unde
     return list[highestIndex as any];
 };
 
+/**
+ * Default comparator for simple name checking
+ * 
+ * @param provided the provided entry
+ * @param keyOverride an override for the name property
+ */
 const nameComparator: (provided: string, keyOverride?: string) => ((item: {[key: string]: any}) => number) = (provided, keyOverride = "name") => (item) => {
     let score = 0;
 
@@ -34,6 +45,9 @@ const nameComparator: (provided: string, keyOverride?: string) => ((item: {[key:
 
 const trueKeywords: string[] = ["true", "yes", "1", "y", "t"];
 
+/**
+ * Parses a raw argument against a given definition, converts it to the expected property or returns null/undefined
+ */
 async function validate(arg: StructuredArgument & {_isCustomFunction?: boolean}, event: MessageEvent, provided: string): Promise<CommandArgument | null | undefined> {
     if (!provided) {
         if (!arg.optional) {
@@ -163,6 +177,11 @@ export const ArgumentParser: (opts?: {silentFail?: boolean}) => CommandMiddlewar
     const invalid: {[key: number]: StructuredArgument & {_isCustomFunction?: boolean}} = {};
     const parsedArguments: CommandArgument[] = [];
 
+    /**
+     * Actual argument parsing code, pass an argument index and definition
+     * @param index the index
+     * @param arg the definition
+     */
     const parseArgument = async (index: number, arg: StructuredArgument) => {
         const provided = providedArgs[index];
         const fuzzy = isNaN(provided as any);
@@ -181,6 +200,11 @@ export const ArgumentParser: (opts?: {silentFail?: boolean}) => CommandMiddlewar
         }
     }
 
+    /**
+     * Parses all remaining provided arguments against a definition. For infinite arguments.
+     * @param startingIndex the starting point
+     * @param arg the argument
+     */
     const parseRemaining = async (startingIndex: number, arg: StructuredArgument) => {
         for (let i = startingIndex; i < providedArgs.length; i++) {
             parseArgument(i, arg);
@@ -198,6 +222,9 @@ export const ArgumentParser: (opts?: {silentFail?: boolean}) => CommandMiddlewar
 
     event.args = parsedArguments;
 
+    /**
+     * Sends an error embed if we are not silently failing.
+     */
     if ((!opts || !opts.silentFail) && Object.keys(invalid).length !== 0) {
         const fields: EmbedField[] = [];
         for (const index in invalid) {

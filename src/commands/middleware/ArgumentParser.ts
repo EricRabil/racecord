@@ -197,14 +197,19 @@ export const ArgumentParser: (opts?: {silentFail?: boolean}) => CommandMiddlewar
         const fields: EmbedField[] = [];
         for (const index in invalid) {
             const item = invalid[index as any as number];
-            let decoratedType = item._isCustomFunction ? "" : isRawType(item) ? item.name : item.type.name;
+            if (!item) {
+                continue;
+            }
+            let decoratedType = item._isCustomFunction ? "" : item.type.name;
             if (decoratedType.endsWith("Record")) {
                 const recordIndex = decoratedType.indexOf("Record");
                 decoratedType = decoratedType.substring(0, recordIndex);
             }
-            const argumentName = `(Arg. #${index}) ${item.name ? item.name : "Untitled"}${decoratedType ? `: ${decoratedType}` : ""}`;
-            fields.push({name: argumentName, value: isRawType(item) ? "" : item.description, inline: true});
+            const argumentName = `(Arg. #${index + 1}) ${item.name ? item.name : "Untitled"}${decoratedType ? `: ${decoratedType}` : ""}`;
+            fields.push({name: argumentName, value: item.description || "\u200b", inline: false});
         }
+        console.log(fields);
+        await event.channel.sendMessage({embed: {color: 0xFF7777, description: "Sorry! Please make sure your arguments meet the below criteria", fields, title: "Invalid Arguments"}});
         return;
     }
 

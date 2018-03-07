@@ -30,7 +30,7 @@ import { SendableMessage, MessageEdit } from "./types/discord/channel/message";
 import { Client } from './classes/Client';
 import { Overwrite } from './types/discord/channel/overwrite';
 import { RawInvite } from './types/raw/RawInvite';
-import { Commander, MessageEvent } from './commands/Commander';
+import { Commander, MessageEvent, Argument, CommandMetadata } from './commands/Commander';
 import * as CommandSuite from './commands/CommandBuilder';
 import * as ChannelActions from './util/rest/actions/ChannelActions';
 import * as MessageActions from './util/rest/actions/MessageActions';
@@ -41,13 +41,14 @@ import * as UserActions from './util/rest/actions/UserActions';
 import * as WebhookActions from './util/rest/actions/WebhookActions';
 import * as EmojiActions from './util/rest/actions/EmojiActions';
 import * as Guards from "./commands/guards";
+import * as Middleware from "./commands/middleware";
 import { SelfUser } from './classes/SelfUser';
 
 Dispatcher.register(action => {
     if (action.type === ActionTypes.DEBUG) {
         console.log(`[${action.context.toUpperCase()}] ${action.data}`)
     }
-})
+});
 
 /**
  * We don't use the key shorthand to prevent TypeScript magic renaming
@@ -64,12 +65,17 @@ export = {
         guards: {
             ...Guards,
         },
+        middleware: {
+            ...Middleware,
+        },
         ...CommandSuite,
     },
     storeManager: StoreManager,
     stores: {
         ...Stores,
     },
+    ...Records,
+    SelfUser: SelfUser,
     internal: {
         actions: {
             ...Actions,
@@ -82,7 +88,6 @@ export = {
         internalDispatcher: Dispatcher,
         RacecordDispatcher: RacecordDispatcher,
         Record: Record,
-        records: {SelfUser: SelfUser, ...Records},
         StoreTracker: StoreTracker,
         miscUtils: MiscUtils,
         SocketConnection: SocketConnection,

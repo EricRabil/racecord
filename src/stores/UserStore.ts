@@ -31,6 +31,10 @@ export const UserStore = new class implements Store<UserRecord> {
         return users.get(currentUserId) as SelfUser;
     }
 
+    public get users() {
+        return users;
+    }
+
     public async findOrCreate(id: string): Promise<UserRecord | undefined> {
         let user: RawUser | UserRecord | undefined = users.get(id);
         if (user) {

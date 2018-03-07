@@ -3,7 +3,7 @@ const {commands} = racecord;
 const {CommandBuilder} = commands;
 const perf = require("perf_hooks");
 const readline = require("readline-sync");
-const MessageRecord = racecord.internal.records.MessageRecord;
+const MessageRecord = racecord.MessageRecord;
 const ActionTypes = racecord.actionTypes;
 const util = require("util");
 
@@ -33,9 +33,19 @@ const pingCommand = CommandBuilder.name("ping").handler(e => {
         newMessage.edit({content: pongText});
     });
 });
+
+/**
+ * Creates an argumented command with the following argdefs:
+ * 
+ * INDEX 0: STRING
+ * INDEX 1: BOOLEAN - NAME: IS QUEEN - DESCRIPTION: IS YOU A QUEEN
+ * INDEX 2: NUMBER
+ */
+const argumentedCommand = CommandBuilder.name("argumented").args(String, {type: Boolean, name: "Is Queen", description: "Is you a queen?"}, Number);
+
 const ping2Command = {
     opts: {
-        name: "ping2"
+        name: "ping2",
     },
     handler: e => e.reply("pong")
 }

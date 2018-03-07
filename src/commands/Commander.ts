@@ -4,42 +4,32 @@ import { TextChannel, DMChannel } from "../classes/channel";
 import { PublicDispatcher } from "../util/Dispatcher";
 import { EventEmitter } from "events";
 import { CommandBuilder, RacecordCommandBuilder } from "./CommandBuilder";
+import { CommandHandler, Command, MessageEvent, CommandMetadata, CommandMiddleware } from "./Command";
 
-export interface MessageEvent {
-    delete(): Promise<void>;
-    reply(content: string, data?: SendableMessage): Promise<MessageRecord>;
-    success(): Promise<void>;
-    command: string;
-    args: string[];
-    user: UserRecord;
-    member?: GuildMemberRecord;
-    channel: TextChannel | DMChannel;
-    guild?: GuildRecord;
-    message: MessageRecord;
-}
-
-export type CommandHandler = (messageEvent: MessageEvent, next: () => void) => void;
-
-export interface Command {
-    opts: {
-        name: string;
-        guards?: CommandHandler[];
-    };
-    handler: CommandHandler;
-}
+export * from "./Command";
 
 export declare interface Commander {
     on(event: "message", handler: (event: MessageEvent) => any): this;
     on(event: string, handler: (event: MessageEvent) => any): this;
 }
 
-/** A lightweight command utility */
+/**
+ * A lightweight command utility
+ * 
+ * Argument parsing is NOT built into Commander. Use a middleware for this (an argument parser middleware is shipped with this)
+ */
 export class Commander {
 
-    private commands: {[key: string]: CommandHandler} = {};
+    private commandHandlers: {[key: string]: CommandHandler} = {};
+    private commandMetadata: {[key: string]: CommandMetadata} = {};
+    private middleware: CommandMiddleware[];
 
     public constructor(private prefix: string) {
         PublicDispatcher.register(action => action.type === "MESSAGE_CREATE" && this.handleMessage(action.data));
+    }
+
+    public use(middleware: CommandMiddleware) {
+        this.middleware.push(middleware);
     }
 
     /**
@@ -55,10 +45,10 @@ export class Commander {
                 command = command.built;
             }
             if (!command.opts.guards || command.opts.guards.length === 0) {
-                this.commands[command.opts.name] = command.handler;
+                this.commandHandlers[command.opts.name] = command.handler;
                 continue;
             }
-            this.commands[command.opts.name] = event => {
+            this.commandHandlers[command.opts.name] = event => {
                 let current: number = 0;
                 let previous: any;
                 const next: () => void = () => {
@@ -72,7 +62,15 @@ export class Commander {
                 }
                 next();
             };
+            this.commandMetadata[command.opts.name] = command.opts;
         }
+    }
+
+    /**
+     * A dictionary of command-name to command-metadata
+     */
+    public get commands(): {[key: string]: CommandMetadata} {
+        return this.commandMetadata;
     }
 
     /**
@@ -103,10 +101,38 @@ export class Commander {
      * @param event the message
      */
     private async dispatchMessage(event: MessageEvent) {
-        const command = this.commands[event.command];
+        const command = this.commandHandlers[event.command];
         if (!command) {
             return;
         }
+        if (this.shouldRunMiddleware) {
+            await this.runMiddlware(event);
+        }
         command(event, undefined as any);
+    }
+
+    private get shouldRunMiddleware(): boolean {
+        return this.middleware.length !== 0;
+    }
+
+    /**
+     * Runs middleware on a command
+     */
+    private runMiddlware(messageEvent: MessageEvent): Promise<void> {
+        return new Promise((resolve, reject) => {
+            let current: number = 0;
+            let previous: any;
+            const metadata = this.commandMetadata[messageEvent.command];
+            const next: () => void = () => {
+                const guard = (this.middleware)[current++];
+                if (!guard || previous === guard) {
+                    resolve();
+                    return;
+                }
+                previous = guard;
+                guard(messageEvent, metadata, next);
+            }
+            next();
+        });
     }
 }

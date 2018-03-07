@@ -1,9 +1,11 @@
-import { CommandHandler, Command } from "./Commander";
+import { CommandHandler, Command, Argument } from "./Commander";
+import { GuildRecord, ChannelRecord, UserRecord, GuildMemberRecord } from "../records";
 
 export class RacecordCommandBuilder {
     private _name: string;
     private _guards: CommandHandler[] = [];
     private _handler: CommandHandler | undefined;
+    private _args: Argument[] = [];
 
     /**
      * Set the name of this command
@@ -11,6 +13,15 @@ export class RacecordCommandBuilder {
      */
     public name(name: string) {
         this._name = name;
+        return this;
+    }
+
+    /**
+     * Adds argument definitions to this command
+     * @param arg the argument definitions
+     */
+    public args(arg: Argument | Argument[]) {
+        this._args = this._args.concat(arg);
         return this;
     }
 
@@ -44,6 +55,7 @@ export class RacecordCommandBuilder {
             opts: {
                 name: this._name,
                 guards: this._guards,
+                args: this._args,
             },
             handler: this._handler as CommandHandler
         }
@@ -71,5 +83,12 @@ export const CommandBuilder = {
      */
     handler(handler: CommandHandler | undefined) {
         return new RacecordCommandBuilder().handler(handler);
+    },
+    /**
+     * Adds argument definitions to this command
+     * @param arg the argument definitions
+     */
+    args(arg: Argument | Argument[]) {
+        return new RacecordCommandBuilder().args(arg);
     }
 }

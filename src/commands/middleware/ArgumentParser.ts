@@ -154,12 +154,32 @@ async function validate(arg: StructuredArgument & {_isCustomFunction?: boolean},
     }
 }
 
+async function defaultErrorConverter(invalid: {[key: number]: StructuredArgument & {_isCustomFunction?: boolean}}, event: MessageEvent) {
+    const fields: EmbedField[] = [];
+    for (const index in invalid) {
+        const item = invalid[index as any as number];
+        if (!item) {
+            continue;
+        }
+        let decoratedType = item._isCustomFunction ? "" : item.type.name;
+        if (decoratedType.endsWith("Record")) {
+            const recordIndex = decoratedType.indexOf("Record");
+            decoratedType = decoratedType.substring(0, recordIndex);
+        }
+        const argumentName = `(Arg. #${(index as any * 1) + 1})${item.name ? ` ${item.name}` : ""}${decoratedType ? ` [${decoratedType}]` : ""}`;
+        fields.push({name: argumentName, value: item.description || "\u200b", inline: false});
+    }
+    console.log(fields);
+    await event.channel.sendMessage({embed: {color: 0xFF7777, description: "Sorry! Please make sure your arguments meet the below criteria", fields, title: "Invalid Arguments"}});
+    return;
+}
+
 /**
  * Implementation of the arguments API
  * 
  * @param opts specify whether imparsable arguments should silently fail or should block command execution (useful for optional object retrieval)
  */
-export const ArgumentParser: (opts?: {silentFail?: boolean}) => CommandMiddleware = (opts) => async (event, command, next) => {
+export const ArgumentParser: (opts?: {silentFail?: boolean, errorConverter?: (invalid: {[key: number]: StructuredArgument}, event?: MessageEvent) => void}) => CommandMiddleware = (opts = {silentFail: false, errorConverter: defaultErrorConverter as any}) => async (event, command, next) => {
     const args: StructuredArgument[] | undefined = command.args as StructuredArgument[] | undefined;
     const providedArgs = event.args as string[];
     if (!args) {
@@ -226,22 +246,7 @@ export const ArgumentParser: (opts?: {silentFail?: boolean}) => CommandMiddlewar
      * Sends an error embed if we are not silently failing.
      */
     if ((!opts || !opts.silentFail) && Object.keys(invalid).length !== 0) {
-        const fields: EmbedField[] = [];
-        for (const index in invalid) {
-            const item = invalid[index as any as number];
-            if (!item) {
-                continue;
-            }
-            let decoratedType = item._isCustomFunction ? "" : item.type.name;
-            if (decoratedType.endsWith("Record")) {
-                const recordIndex = decoratedType.indexOf("Record");
-                decoratedType = decoratedType.substring(0, recordIndex);
-            }
-            const argumentName = `(Arg. #${(index as any * 1) + 1})${item.name ? ` ${item.name}` : ""}${decoratedType ? ` [${decoratedType}]` : ""}`;
-            fields.push({name: argumentName, value: item.description || "\u200b", inline: false});
-        }
-        console.log(fields);
-        await event.channel.sendMessage({embed: {color: 0xFF7777, description: "Sorry! Please make sure your arguments meet the below criteria", fields, title: "Invalid Arguments"}});
+        await (opts.errorConverter as any)(invalid, event);
         return;
     }
 

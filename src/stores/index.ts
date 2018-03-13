@@ -1,9 +1,10 @@
-export * from "./ChannelStore";
-export * from "./EmojiStore";
-export * from "./GuildMemberStore";
-export * from "./GuildStore";
-export * from "./IntegrationStore";
-export * from "./MessageStore";
-export * from "./RoleStore";
-export * from "./SettingsStore";
-export * from "./UserStore";
+export {ChannelStore, ChannelStoreImpl} from "./ChannelStore";
+export {EmojiStore, EmojiStoreImpl} from "./EmojiStore";
+export {GuildMemberStore, GuildMemberStoreImpl} from "./GuildMemberStore";
+export {GuildStore, GuildStoreImpl} from "./GuildStore";
+export {IntegrationStore, IntegrationStoreImpl} from "./IntegrationStore";
+export {MessageStore, MessageStoreImpl} from "./MessageStore";
+export {RoleStore, RoleStoreImpl} from "./RoleStore";
+export {SettingsStore, SettingsStoreImpl} from "./SettingsStore";
+export {UserStore, UserStoreImpl} from "./UserStore";
+

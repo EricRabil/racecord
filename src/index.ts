@@ -20,7 +20,8 @@ import * as Actions from "./util/rest/actions";
 import * as SocketConstants from './util/gateway/SocketConstants';
 import * as SocketConnection from './util/gateway/SocketConnection';
 import * as GatewayEvents from './util/gateway/GatewayEvents';
-import * as Stores from './stores';
+import * as Stores from './stores/stores';
+import * as StoreImplementations from './stores/implementations';
 import * as Records from './records';
 import {Record} from "./classes/Record";
 import {GatewayConnection} from "./classes/GatewayConnection";
@@ -30,7 +31,7 @@ import { SendableMessage, MessageEdit } from "./types/discord/channel/message";
 import { Client } from './classes/Client';
 import { Overwrite } from './types/discord/channel/overwrite';
 import { RawInvite } from './types/raw/RawInvite';
-import { Commander, MessageEvent, Argument, CommandMetadata } from './commands/Commander';
+import { Commander, MessageEvent, Argument, CommandMetadata, StructuredArgument } from './commands/Commander';
 import * as CommandSuite from './commands/CommandBuilder';
 import * as ChannelActions from './util/rest/actions/ChannelActions';
 import * as MessageActions from './util/rest/actions/MessageActions';
@@ -92,6 +93,7 @@ export = {
         miscUtils: MiscUtils,
         SocketConnection: SocketConnection,
         socketConstants: SocketConstants,
-        wrappers: {...Channels}
+        wrappers: {...Channels},
+        storeImplementations: StoreImplementations
     },
 };

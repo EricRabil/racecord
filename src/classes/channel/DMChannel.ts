@@ -7,9 +7,10 @@ import { MessageRecord } from "../../records/MessageRecord";
 import { sendMessage, MessageFetchQuery, fetchMessages, fetchMessage, addDMRecipient, removeDMRecipient, getPinnedMessages, addPin, removePin, typing } from "../../util/rest/actions/ChannelActions";
 import { RawEmoji, RawMessage } from "../../types/raw";
 import { deleteMessages } from "../../util/rest/actions/MessageActions";
-import { MessageStore, mixedMessageInsert } from "../../stores";
+import { MessageStore } from "../../stores";
 import { createNonce } from "../../util/MiscUtils";
 import { TextBasedMethods } from "./util/textBasedMethods";
+import { mixedMessageInsert } from "../../stores/MessageStore";
 
 export type DMGroupChannel = DMChannel & {
     owner_id: string;

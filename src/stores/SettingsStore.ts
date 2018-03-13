@@ -11,7 +11,7 @@ const settings = {
 type Settings = typeof settings;
 type PartialSettings = Partial<Settings>;
 
-export const SettingsStore = new class {
+export class SettingsStoreImpl {
     public get preserveDeletedMessages(): boolean {
         return settings.preserveDeletedMessages;
     }
@@ -23,6 +23,8 @@ export const SettingsStore = new class {
         return settings.token;
     }
 }
+
+export const SettingsStore = new SettingsStoreImpl();
 
 async function merge(newSettings: PartialSettings) {
     for (const key in newSettings) {

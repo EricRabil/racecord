@@ -6,7 +6,7 @@ import { RawGuildMember } from "../types/raw/RawGuildMember";
 import { RawChannel } from "../types/raw/RawChannel";
 import { Presence } from "../types/discord/user/presence";
 import { GuildMemberRecord } from "./GuildMemberRecord";
-import { GuildMemberStore, mixedMemberInsert, handleGuildMemberAddOrUpdate } from "../stores/index";
+import { GuildMemberStore } from "../stores/index";
 import { ChannelRecord } from "./ChannelRecord";
 import { ChannelStore } from "../stores/ChannelStore";
 import { TextChannel } from "../classes/channel/TextChannel";
@@ -19,6 +19,7 @@ import { BanRecord } from "./BanRecord";
 import { RoleRecord } from "./RoleRecord";
 import { RoleStore } from "../stores/RoleStore";
 import { InviteRecord } from "./InviteRecord";
+import { mixedMemberInsert, handleGuildMemberAddOrUpdate } from "../stores/GuildMemberStore";
 
 export class GuildRecord extends Record implements RawGuild {
 

@@ -13,7 +13,7 @@ import { Pending } from "../helpers/Pending";
 const guilds: Map<string, GuildRecord> = new Map();
 const waiter: Pending<GuildRecord> = new Pending();
 
-export const GuildStore = new class implements Store<GuildRecord> {
+export class GuildStoreImpl implements Store<GuildRecord> {
     /**
      * A map of all guilds
      */
@@ -39,6 +39,8 @@ export const GuildStore = new class implements Store<GuildRecord> {
     }
 }
 
+export const GuildStore = new GuildStoreImpl();
+
 function handleGuildCreate(action: GuildCreatePayload, dispatch: boolean = true): GuildRecord {
     const guildData = action.d;
     const record = new GuildRecord(guildData);
@@ -56,7 +58,7 @@ function handleGuildDelete(action: GuildDeletePayload) {
         record.unavailable = action.d.unavailable;
     }
     guilds.delete(action.d.id);
-    PublicDispatcher.dispatch({type: ActionTypes.GUILD_DELETE, data: record});
+    PublicDispatcher.dispatch({type: ActionTypes.GUILD_DELETE, data: record as GuildRecord});
 }
 
 function handleGuildUpdate(action: GuildUpdatePayload) {

@@ -9,12 +9,13 @@ import { getEntity } from "../util/HTTPUtils";
 import { Endpoints } from "../util/Constants";
 import { Pending } from "../helpers/Pending";
 import { SelfUser } from "../classes/SelfUser";
+import { PublicDispatcher } from "../util/Dispatcher";
 
 const users: Map<string, UserRecord> = new Map();
 let currentUserId: string;
 const waiter: Pending<UserRecord> = new Pending();
 
-export const UserStore = new class implements Store<UserRecord> {
+export class UserStoreImpl implements Store<UserRecord> {
     /**
      * Gets a user by their ID
      * 
@@ -49,11 +50,13 @@ export const UserStore = new class implements Store<UserRecord> {
     }
 }
 
+export const UserStore = new UserStoreImpl();
+
 /**
  * Called when a fresh user object is encountered, either by REST or otherwise.
  * @param user the user that has been uptaken.
  */
-export function addOrMergeUser(user: RawUser): UserRecord | undefined {
+export function addOrMergeUser(user: RawUser, dispatchUpdate: boolean = false): UserRecord | undefined {
     if (!user) {
         return;
     }
@@ -64,6 +67,12 @@ export function addOrMergeUser(user: RawUser): UserRecord | undefined {
         users.set(user.id, userRecord);
     } else {
         userRecord.merge(user);
+    }
+    if (dispatchUpdate) {
+        PublicDispatcher.dispatch({
+            type: ActionTypes.USER_UPDATE,
+            data: userRecord
+        });
     }
     return userRecord;
 }
@@ -90,5 +99,8 @@ StoreManager.register(UserStore, action => {
         case ActionTypes.GUILD_MEMBER_ADD:
             addOrMergeUser((action.payload as GuildMemberAddPayload).d.user);
             break;
+        case ActionTypes.USER_UPDATE:
+            addOrMergeUser(action.data);
+            break;
     }
-})
+});

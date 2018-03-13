@@ -2,7 +2,7 @@ import { Store } from "../types/structures/store";
 import { GuildMemberRecord } from "../records/GuildMemberRecord";
 import { RawGuildMember } from "../types/raw/RawGuildMember";
 import { StoreManager } from "../util/StoreManager";
-import { GuildStore, UserStore, addOrMergeUser } from "./index";
+import { GuildStore, UserStore } from "./index";
 import { ActionTypes, ActionType } from "../types/structures/action";
 import { GuildMemberAddPayload } from "../util/gateway/GatewayEvents";
 import { GuildRecord } from "../records/GuildRecord";
@@ -11,11 +11,12 @@ import { PublicDispatcher } from "../util/Dispatcher";
 import { getEntity } from "../util/HTTPUtils";
 import { Endpoints } from "../util/Constants";
 import { Pending } from "../helpers/Pending";
+import { addOrMergeUser } from "./UserStore";
 
 const guildMembers: Map<string, Map<string, GuildMemberRecord>> = new Map();
 const waiter: Pending<GuildMemberRecord> = new Pending();
 
-export const GuildMemberStore = new class implements Store<GuildMemberRecord> {
+export class GuildMemberStoreImpl implements Store<GuildMemberRecord> {
     /**
      * An array of all members the client is keeping track of
      */
@@ -93,6 +94,8 @@ export const GuildMemberStore = new class implements Store<GuildMemberRecord> {
     }
 }
 
+export const GuildMemberStore = new GuildMemberStoreImpl();
+
 /**
  * Used to insert or update a member record with a raw member record.
  * 
@@ -104,7 +107,7 @@ export const GuildMemberStore = new class implements Store<GuildMemberRecord> {
  * @param type the action type, used for event re-dispatching.
  * @param dispatch whether we should actually re-dispatch.
  */
-export function handleGuildMemberAddOrUpdate(member: RawGuildMember, guild?: string, type?: ActionType, dispatch: boolean = true): GuildMemberRecord | undefined {
+export function handleGuildMemberAddOrUpdate(member: RawGuildMember, guild?: string, type?: "GUILD_MEMBER_ADD" | "GUILD_MEMBER_UPDATE", dispatch: boolean = true): GuildMemberRecord | undefined {
     if (!guild) {
         const extraParam = (member as any).guild_id;
         if (extraParam) {
@@ -157,7 +160,7 @@ function bulkMemberIntake(members: RawGuildMember[], guild?: string) {
     }
 }
 
-StoreManager.register(GuildStore, action => {
+StoreManager.register(GuildMemberStore, action => {
     switch (action.type) {
         case ActionTypes.GUILD_MEMBER_ADD:
             handleGuildMemberAddOrUpdate(action.data, undefined, action.type);
@@ -168,6 +171,9 @@ StoreManager.register(GuildStore, action => {
         case ActionTypes.GUILD_CREATE:
             guildMembers.set(action.data.id, new Map());
             bulkMemberIntake(action.data.members, action.data.id);
+            break;
+        case ActionTypes.GUILD_MEMBERS_CHUNK:
+            bulkMemberIntake(action.data.members, action.data.guild_id);
             break;
     }
 })

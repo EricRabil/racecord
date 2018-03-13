@@ -14,7 +14,7 @@ import { Analytics } from "../util/Analytics";
 const roles: Map<string, Map<string, RoleRecord>> = new Map();
 const waiter: Pending<RoleRecord> = new Pending();
 
-export const RoleStore = new class implements Store<RoleRecord> {
+export class RoleStoreImpl implements Store<RoleRecord> {
 
     public getOrCreateSection = getOrCreateSection;
 
@@ -35,6 +35,8 @@ export const RoleStore = new class implements Store<RoleRecord> {
         return new Promise((resolve) => waiter.enlist(id, resolve));
     }
 }
+
+export const RoleStore = new RoleStoreImpl();
 
 /**
  * Recursively finds a role without its guild ID, possible performance hit with a lot of guilds or a lot of roles.
@@ -60,7 +62,7 @@ function getOrCreateSection(id: string): Map<string, RoleRecord> {
     return section;
 }
 
-function handleRoleCreateOrUpdate(role: RawRole, guild: string, type?: ActionType, dispatch: boolean = true): RoleRecord {
+function handleRoleCreateOrUpdate(role: RawRole, guild: string, type?: "GUILD_ROLE_CREATE" | "GUILD_ROLE_UPDATE", dispatch: boolean = true): RoleRecord {
     Analytics.debug("RoleStore", `Role update trigger: RID ${role.id} GID ${guild} Type? ${type}`);
     const section = getOrCreateSection(guild);
     let roleRecord = section.get(role.id);
@@ -96,7 +98,7 @@ function handleRoleDelete(action: GuildRoleDeletePayload, dispatch: boolean = tr
     const role = section.get(role_id);
     section.delete(role_id);
     if (dispatch) {
-        PublicDispatcher.dispatch({type: action.t, data: role});
+        PublicDispatcher.dispatch({type: action.t, data: role as RoleRecord});
     }
 }
 

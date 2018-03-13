@@ -7,11 +7,14 @@ import { RawEmoji } from "../types/raw";
 import { getEntity } from "../util/HTTPUtils";
 import { Endpoints } from "../util/Constants";
 import { Pending } from "../helpers/Pending";
+import { PublicDispatcher } from "../util/Dispatcher";
+import { GuildStore } from ".";
+import { GuildRecord } from "../records";
 
 const guildEmojis: Map<string, Map<string, EmojiRecord>> = new Map();
 const waiter: Pending<EmojiRecord> = new Pending();
 
-export const EmojiStore = new class implements Store<EmojiRecord> {
+export class EmojiStoreImpl implements Store<EmojiRecord> {
 
     /**
      * Returns all emojis for the given guild
@@ -68,6 +71,8 @@ export const EmojiStore = new class implements Store<EmojiRecord> {
 
 }
 
+export const EmojiStore = new EmojiStoreImpl();
+
 async function emojiIntake(guildID: string, emojis: RawEmoji[]) {
     const emojiMap: Map<string, EmojiRecord> = new Map();
     for (const emoji of emojis) {
@@ -76,12 +81,17 @@ async function emojiIntake(guildID: string, emojis: RawEmoji[]) {
         emojiMap.set(emoji.id as string, emojiRecord);
     }
     guildEmojis.set(guildID, emojiMap);
+    PublicDispatcher.dispatch({
+        type: "GUILD_EMOJIS_UPDATE",
+        data: (await GuildStore.findOrCreate(guildID)) as GuildRecord
+    });
 }
 
 StoreManager.register(EmojiStore, action => {
     switch (action.type) {
         case ActionTypes.GUILD_EMOJIS_UPDATE:
             const updatePayload = action.payload as GuildEmojisUpdatePayload;
+            emojiIntake(updatePayload.d.guild_id, updatePayload.d.emojis);
             break;
     }
 });

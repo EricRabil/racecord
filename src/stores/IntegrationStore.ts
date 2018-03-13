@@ -10,7 +10,7 @@ import { ActionType, ActionTypes } from "../types/structures/action";
 const integrations: Map<string, Map<string, IntegrationRecord>> = new Map();
 const waiter: Pending<IntegrationRecord> = new Pending();
 
-export const IntegrationStore = new class IntegrationStore implements Store<IntegrationRecord> {
+export class IntegrationStoreImpl implements Store<IntegrationRecord> {
     findOrCreate(id: string): Promise<IntegrationRecord | undefined> {
         throw new Error("Method not implemented.");
     }
@@ -19,11 +19,13 @@ export const IntegrationStore = new class IntegrationStore implements Store<Inte
     }
 }
 
+export const IntegrationStore = new IntegrationStoreImpl();
+
 function getOrCreateSection(id: string): Map<string, IntegrationRecord> {
     return integrations.get(id) || integrations.set(id, new Map()).get(id) as Map<string, IntegrationRecord>;
 }
 
-export function handleIntegrationAddOrUpdate(integration: RawIntegration, guild: string, type: ActionType, dispatch: boolean = true): IntegrationRecord {
+export function handleIntegrationAddOrUpdate(integration: RawIntegration, guild: string, type: "WEBHOOKS_UPDATE", dispatch: boolean = true): IntegrationRecord {
     const section = getOrCreateSection(guild);
     let record = section.get(integration.id);
     if (record) {
@@ -33,7 +35,7 @@ export function handleIntegrationAddOrUpdate(integration: RawIntegration, guild:
         section.set(integration.id, record);
     }
     if (dispatch) {
-        PublicDispatcher.dispatch({type, data: record});
+        PublicDispatcher.dispatch({type, data: record as any});
     }
     return record;
 }

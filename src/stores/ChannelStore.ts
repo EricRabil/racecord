@@ -16,11 +16,13 @@ const {readonly} = MiscUtils;
 import { PublicDispatcher } from "../util/Dispatcher";
 import { getEntity } from "../util/HTTPUtils";
 import { Pending } from "../helpers/Pending";
+import { UserStore } from ".";
+import { UserRecord } from "../records";
 
 const channels: Map<string, ChannelRecord> = new Map();
 const waiter: Pending<ChannelRecord> = new Pending();
 
-export const ChannelStore = new class implements Store<ChannelRecord> {
+export class ChannelStoreImpl implements Store<ChannelRecord> {
 
     textChannels: Map<string, TextChannel>;
     voiceChannels: Map<string, VoiceChannel>;
@@ -82,6 +84,7 @@ export const ChannelStore = new class implements Store<ChannelRecord> {
     }
 }
 
+export const ChannelStore = new ChannelStoreImpl();
 
 function channelFilterByGuild (guild: string): Map<string, ChannelRecord> {
     const channelMap: Map<string, ChannelRecord> = new Map();
@@ -160,7 +163,7 @@ function handleBulkChannelCreate(channels: RawChannel[], guild?: string) {
 function handleDeleteChannel(channel: RawChannel) {
     const channelRecord = channels.get(channel.id);
     if (channelRecord) {
-        PublicDispatcher.dispatch({type: ActionTypes.CHANNEL_DELETE, channelRecord});
+        PublicDispatcher.dispatch({type: ActionTypes.CHANNEL_DELETE, data: channelRecord});
     }
     channels.delete(channel.id);
 }
@@ -169,6 +172,22 @@ function handleBulkChannelDelete(channels: RawChannel[], guild?: string) {
     for (const channel of channels) {
         handleDeleteChannel(channel);
     }
+}
+
+async function handleTypingChange(channelID: string, userID: string, time: number, type: "TYPING_START" | "TYPING_STOP") {
+    const channel = (await ChannelStore.findOrCreate(channelID)) as ChannelRecord;
+    const user = (await UserStore.findOrCreate(userID)) as UserRecord;
+    const timestamp = new Date(time);
+    const member = channel.guild && await channel.guild.getMember(userID);
+    PublicDispatcher.dispatch({
+        type,
+        data: {
+            channel,
+            user,
+            member,
+            timestamp
+        }
+    });
 }
 
 StoreManager.register(ChannelStore, action => {
@@ -184,6 +203,10 @@ StoreManager.register(ChannelStore, action => {
             break;
         case ActionTypes.GUILD_CREATE:
             handleBulkChannelCreate(action.data.channels, action.data.id);
+            break;
+        case ActionTypes.TYPING_START:
+            handleTypingChange(action.data.channel_id, action.data.user_id, action.data.timestamp, action.type);
+            break;
         default:
             return false;
     }

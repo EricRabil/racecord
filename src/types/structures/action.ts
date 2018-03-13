@@ -17,7 +17,12 @@ export type ActionConsumer = (action: Action) => any;
 
 export type Action = BaseAction;
 
-export interface BaseAction {
+export interface RawAction {
+    type: string;
+    data?: any;
+}
+
+export interface BaseAction extends RawAction {
     type: ActionType;
     /** Raw action payload, if coming from the gateway */
     payload?: Payload;

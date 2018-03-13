@@ -1,23 +1,27 @@
-import {Action, ActionType, ActionTypes} from "../types/structures/action";
+import {ActionType, ActionTypes, RawAction, BaseAction} from "../types/structures/action";
 import { EventEmitter } from "events";
+import { ChannelRecord, GuildRecord, BanRecord, GuildMemberRecord, RoleRecord, MessageRecord, UserRecord } from "../records";
+import { RawReaction, RawVoiceState } from "../types/raw";
+import { Presence } from "../types/discord/user/presence";
 
 /**
+ * @private
  * A very lightweight event system, used by internal components
  * 
  * This dispatching system is 100% asynchronous. Multiple events can be dispatched at the same time.
- * */
-export class RacecordDispatcher {
+ */
+export class RacecordDispatcher<T extends RawAction> {
 
     /**
      * A map of unique IDs to listeners
      */
-    private listenerMap: {[key: string]: (action: Action) => any} = {};
+    private listenerMap: {[key: string]: (action: T) => any} = {};
 
     /**
      * Dispatch an event to all listeners
      * @param action the action to dispatch
      */
-    public async dispatch(action: Action) {
+    public async dispatch(action: T) {
         for (const id in this.listenerMap) {
             (async () => this.listenerMap[id](action))();
         }
@@ -28,7 +32,7 @@ export class RacecordDispatcher {
      * @param listener the listener to register
      * @returns the unique ID if you plan on de-registering later
      */
-    public register(listener: (action: Action) => any): string {
+    public register(listener: (action: T) => any): string {
         const key = this.nextKey;
         this.listenerMap[key] = listener;
         return key;
@@ -52,15 +56,16 @@ export class RacecordDispatcher {
     /**
      * An array of listeners
      */
-    private get listeners(): Array<(action: Action) => any> {
+    private get listeners(): Array<(action: T) => any> {
         return Object.values(this.listenerMap);
     }
 }
 
 /**
+ * @private
  * The internal dispatcher - raw gateway events will be dispatched here
- * */
-export const Dispatcher = new RacecordDispatcher();
+ */
+export const Dispatcher: RacecordDispatcher<BaseAction> = new RacecordDispatcher();
 
 const intercepted: ActionType[] = [
     ActionTypes.CHANNEL_UPDATE,
@@ -77,12 +82,70 @@ const intercepted: ActionType[] = [
 ];
 
 /**
+ * To be implemented:
+ * PRESENCE_UPDATE
+ * WEBHOOKS_UPDATE
+ */
+
+export type DiscordAction = {
+    type: "CHANNEL_CREATE" | "CHANNEL_UPDATE" | "CHANNEL_DELETE";
+    data: ChannelRecord;
+} | {
+    type: "GUILD_CREATE" | "GUILD_UPDATE" | "GUILD_DELETE";
+    data: GuildRecord;
+} | {
+    type: "GUILD_BAN_ADD" | "GUILD_BAN_REMOVE";
+    data: BanRecord;
+} | {
+    type: "GUILD_EMOJIS_UPDATE";
+    data: GuildRecord;
+} | {
+    type: "GUILD_MEMBER_ADD" | "GUILD_MEMBER_REMOVE" | "GUILD_MEMBER_UPDATE";
+    data: GuildMemberRecord;
+} | {
+    type: "GUILD_ROLE_CREATE" | "GUILD_ROLE_DELETE" | "GUILD_ROLE_UPDATE";
+    data: RoleRecord;
+} | {
+    type: "MESSAGE_CREATE" | "MESSAGE_UPDATE" | "MESSAGE_DELETE";
+    data: MessageRecord;
+} | {
+    type: "MESSAGE_REACTION_ADD" | "MESSAGE_REACTION_REMOVE";
+    data: {
+        message: MessageRecord;
+        reaction: RawReaction;
+    };
+} | {
+    type: "MESSAGE_REACTION_REMOVE_ALL";
+    data: MessageRecord;
+} | {
+    type: "PRESENCE_UPDATE";
+    data: {
+        user: UserRecord;
+        roles?: RoleRecord[];
+    } & Presence;
+} | {
+    type: "TYPING_START" | "TYPING_STOP";
+    data: {
+        channel: ChannelRecord;
+        user: UserRecord;
+        member?: GuildMemberRecord;
+        timestamp: Date;
+    };
+} | {
+    type: "USER_UPDATE";
+    data: UserRecord;
+} | {
+    type: "VOICE_STATE_UPDATE";
+    data: RawVoiceState;
+} | {
+    type: "WEBHOOKS_UPDATE";
+    data: {
+        guild: GuildRecord;
+        channel: ChannelRecord;
+    }
+};
+
+/**
  * The public dispatcher - Racecord will dispatch gateway events here but with records instead of rawtypes
  */
-export const PublicDispatcher = new RacecordDispatcher();
-Dispatcher.register(action => {
-    if (intercepted.indexOf(action.type) !== -1) {
-        return;
-    }
-    PublicDispatcher.dispatch(action);
-});
+export const PublicDispatcher: RacecordDispatcher<DiscordAction> = new RacecordDispatcher();

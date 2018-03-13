@@ -1,23 +1,25 @@
 import {Store} from "../types/structures/store";
 import {StoreManager} from "../util/StoreManager";
-import { ActionTypes } from "../types/structures/action";
+import { ActionTypes, ActionType } from "../types/structures/action";
 import { MessageRecord } from "../records/MessageRecord";
 import { SettingsStore } from "./SettingsStore";
 import { RawMessage } from "../types/raw/RawMessage";
 import { RawChannel } from "../types/raw/RawChannel";
 import { PublicDispatcher } from "../util/Dispatcher";
 import { Analytics } from "../util/Analytics";
-import { ChannelRecord } from "../records";
+import { ChannelRecord, UserRecord, EmojiRecord } from "../records";
 import { getEntity } from "../util/HTTPUtils";
 import { Endpoints } from "../util/Constants";
 import { Pending } from "../helpers/Pending";
+import { ChannelStore, UserStore, EmojiStore } from ".";
+import { RawEmoji } from "../types/raw";
 const Enmap = require("enmap");
 
 const messages: Map<string, Map<string, MessageRecord>> = new Map();
 const pendingNonces: Map<string, (message: MessageRecord) => any> = new Map();
 const waiter: Pending<MessageRecord> = new Pending();
 
-export const MessageStore = new class implements Store<MessageRecord> {
+export class MessageStoreImpl implements Store<MessageRecord> {
     /**
      * Returns a map of snowflakes to messages for a given channel
      * 
@@ -59,6 +61,8 @@ export const MessageStore = new class implements Store<MessageRecord> {
     }
 }
 
+export const MessageStore = new MessageStoreImpl();
+
 function getOrCreateSection({id}: {id: string}): Map<string, MessageRecord> {
     let section = messages.get(id);
     if (!section) {
@@ -74,6 +78,13 @@ function getMessage(id: string, channelID: string): MessageRecord | undefined {
         return undefined;
     }
     return section.get(id);
+}
+
+async function findEmoji(emoji: RawEmoji, guild?: string): Promise<EmojiRecord | undefined> {
+    if (emoji.id === null) {
+        return new EmojiRecord(emoji);
+    }
+    return await EmojiStore.findOrCreate(emoji.id, guild);
 }
 
 async function merge(message: Partial<MessageRecord>) {
@@ -111,7 +122,11 @@ async function handleMessageDelete(message: RawMessage) {
     const section = messages.get(message.channel_id);
     if (section) {
         const oldMessage = section.get(message.id);
-        PublicDispatcher.dispatch({type: ActionTypes.MESSAGE_DELETE, data: oldMessage});
+        if (oldMessage) {
+            PublicDispatcher.dispatch({type: ActionTypes.MESSAGE_DELETE, data: oldMessage});
+        } else {
+            PublicDispatcher.dispatch({type: ActionTypes.MESSAGE_DELETE, data: {id: message.id} as any});
+        }
     }
     if (SettingsStore.preserveDeletedMessages) {
         const {id, channel_id} = message;
@@ -186,6 +201,42 @@ export async function mixedMessageInsert(messages: RawMessage[]): Promise<Map<st
     return records;
 }
 
+async function messageReactionInteract(messageID: string, channelID: string, userID: string, rawEmoji: {id: string | null, name: string}, type: "MESSAGE_REACTION_ADD" | "MESSAGE_REACTION_REMOVE") {
+    const message = (await MessageStore.findOrCreate(messageID)) as MessageRecord;
+    const channel = (await ChannelStore.findOrCreate(channelID)) as ChannelRecord;
+    const emoji = (await findEmoji(rawEmoji, channel.guild_id)) as EmojiRecord;
+    const rxnIndex = message.reactions.findIndex(rxn => rxn.emoji.id === emoji.id);
+    let rxn = message.reactions[rxnIndex];
+    if (type === ActionTypes.MESSAGE_REACTION_REMOVE) {
+        if (rxn) {
+            rxn.count--;
+            if (rxn.count === 0) {
+                message.reactions.splice(rxnIndex);
+            }
+        }
+    } else {
+        rxn = rxn || {
+            count: 0,
+            me: false,
+            emoji
+        };
+        rxn.count++;
+    }
+    PublicDispatcher.dispatch({type, data: {
+        message,
+        reaction: rxn
+    }});
+}
+
+async function messageReactionRemoveAll(channelID: string, messageID: string) {
+    const message = (await MessageStore.findOrCreate(messageID, channelID)) as MessageRecord;
+    message.reactions = [];
+    PublicDispatcher.dispatch({
+        type: ActionTypes.MESSAGE_REACTION_REMOVE_ALL,
+        data: message
+    });
+}
+
 StoreManager.register(MessageStore, (action) => {
     switch (action.type) {
         case ActionTypes.CHANNEL_CREATE:
@@ -202,6 +253,15 @@ StoreManager.register(MessageStore, (action) => {
             break;
         case ActionTypes.MESSAGE_UPDATE:
             handleMessageEdit(action.data);
+            break;
+        case ActionTypes.MESSAGE_REACTION_ADD:
+            messageReactionInteract(action.data.message_id, action.data.channel_id, action.data.user_id, action.data.emoji, action.type);
+            break;
+        case ActionTypes.MESSAGE_REACTION_REMOVE:
+            messageReactionInteract(action.data.message_id, action.data.channel_id, action.data.user_id, action.data.emoji, action.type);
+            break;
+        case ActionTypes.MESSAGE_REACTION_REMOVE_ALL:
+            messageReactionRemoveAll(action.data.channel_id, action.data.message_id);
             break;
         default:
             break;

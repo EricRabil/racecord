@@ -36,6 +36,7 @@ export interface SocketEvent {
 
 /** 
  * A socket connection "kernel", manages communication and compression
+ * @private
  * */
 export class SocketConnection extends EventEmitter {
     private ws: ws;

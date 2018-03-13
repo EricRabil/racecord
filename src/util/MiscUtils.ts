@@ -5,6 +5,7 @@ import * as repl from "repl";
 /**
  * Reverses an object
  * @param object the object to reverse
+ * @private
  */
 export function reverseObject(object: {[key: string]: any}): any {
     const obj: {[key: string]: any} = {};
@@ -21,6 +22,7 @@ export function reverseObject(object: {[key: string]: any}): any {
  * @param instance the object to declare a property on
  * @param key the key that will be read-only
  * @param data the value of the read-only property
+ * @private
  */
 export function readonly(instance: any, key: string, data: any): void {
     if (typeof data === "function") {
@@ -40,7 +42,10 @@ export function readonly(instance: any, key: string, data: any): void {
     }
 }
 
-/** Creates a random nonce */
+/** 
+ * Creates a random nonce
+ * @private 
+ */
 export function createNonce() {
     return Long.fromNumber(Date.now()).subtract(1420070400000).shiftLeft(22).toString();
 }
@@ -49,6 +54,7 @@ export function createNonce() {
  * Omits the given keys from an object
  * @param object the object to filter
  * @param keys the keys to omit
+ * @private
  */
 export function omit<K>(object: K, keys: string[]): Partial<K> {
     const omitted: {[key: string]: any} = {};

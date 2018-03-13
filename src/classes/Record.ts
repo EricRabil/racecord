@@ -1,6 +1,7 @@
 import { Analytics } from "../util/Analytics";
 import { readonly } from "../util/MiscUtils";
 
+/** @private */
 export class Record {
     /**
      * Merges new data into this record, useful for update events

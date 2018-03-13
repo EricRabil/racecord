@@ -14,7 +14,11 @@ Dispatcher.register((action) => {
     }
 })
 
-/** Tracks and dispatches to stores */
+/**
+ * Tracks and dispatches to stores
+ * 
+ * @private
+ */
 export class StoreTracker {
 
     private _stores: Store<any>[] = [];
@@ -52,5 +56,6 @@ export class StoreTracker {
     }
 }
 
+/** The manager for registering stores @private */
 export const StoreManager = new StoreTracker();
 import "../stores";

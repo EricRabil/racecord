@@ -1,11 +1,12 @@
 /**
+ * @private
  * Patches superagent to include the authorization token when communicating with DAPI
  */
-
 import * as superagent from "superagent";
 import { Constants } from "../Constants";
 import { SettingsStore } from "../../stores/SettingsStore";
 
+/** @private */
 const originalEnd = ((superagent as any).Request.prototype as superagent.Request).end;
 ((superagent as any).Request.prototype as superagent.Request).end = function(...args: any[]) {
     const url = (this as any).url as string;

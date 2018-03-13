@@ -5,7 +5,10 @@ export type Resolution<T> = (entity: T) => any;
 
 type ResolverMap<T> = Map<string, Array<Resolution<T>>>;
 
-/** A simple class for waiting for objects that meet a given criteria */
+/**
+ * @private
+ * A simple class for waiting for objects that meet a given criteria
+ */
 export class Pending<T> {
     private resolvers: ResolverMap<T> = new Map();
 

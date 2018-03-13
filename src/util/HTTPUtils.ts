@@ -2,8 +2,10 @@ import * as superagent from "superagent";
 import "./patches/superagentPatch";
 import { Backoff } from "./rest/Backoff";
 
+/** The request method */
 export type HTTPMethod = 'get' | 'post' | 'put' | 'patch' | 'del';
 
+/** Any options provided for carrying out the request */
 export interface HTTPRequest {
     url: string,
     query?: {[key: string]: any} | string,
@@ -14,12 +16,22 @@ export interface HTTPRequest {
     retries?: number,
 };
 
+/**
+ * Represents a response from the server
+ */
 export interface FulfilledRequest {
     header: any;
     body: any;
     status: number;
 }
 
+/**
+ * @private
+ * @param method the request method, GET, POST, PUT, PATCH or DEL
+ * @param opts the options
+ * @param resolveOverride whether to override the resolve function for this
+ * @param rejectOverride whether to override the reject function for this
+ */
 export function sendRequest(method: HTTPMethod, opts: HTTPRequest, resolveOverride?: () => void, rejectOverride?: () => void): Promise<FulfilledRequest> {
     return new Promise((resolve, reject) => {
         resolve = resolveOverride || resolve;

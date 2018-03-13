@@ -1,6 +1,9 @@
 import { Dispatcher } from "./Dispatcher";
 
-/** Used for debugging within the library */
+/**
+ * @private
+ * Used for debugging within the library
+ */
 export class AnalyticUtils {
     constructor() {
     }

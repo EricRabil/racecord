@@ -4,6 +4,7 @@ import { createNonce } from "../../../util/MiscUtils";
 import { MessageStore } from "../../../stores";
 import { sendMessage as sendRawMessage } from "../../../util/rest/actions/ChannelActions";
 
+/** @private */
 export namespace TextBasedMethods {
     /**
      * Sends a message for a text-based channel

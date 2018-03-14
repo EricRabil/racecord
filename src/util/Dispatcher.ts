@@ -67,26 +67,6 @@ export class RacecordDispatcher<T extends RawAction> {
  */
 export const Dispatcher: RacecordDispatcher<BaseAction> = new RacecordDispatcher();
 
-const intercepted: ActionType[] = [
-    ActionTypes.CHANNEL_UPDATE,
-    ActionTypes.CHANNEL_CREATE,
-    ActionTypes.CHANNEL_DELETE,
-    ActionTypes.GUILD_MEMBER_ADD,
-    ActionTypes.GUILD_MEMBER_UPDATE,
-    ActionTypes.GUILD_CREATE,
-    ActionTypes.GUILD_UPDATE,
-    ActionTypes.GUILD_DELETE,
-    ActionTypes.MESSAGE_CREATE,
-    ActionTypes.MESSAGE_UPDATE,
-    ActionTypes.MESSAGE_DELETE
-];
-
-/**
- * To be implemented:
- * PRESENCE_UPDATE
- * WEBHOOKS_UPDATE
- */
-
 export type DiscordAction = {
     type: "CHANNEL_CREATE" | "CHANNEL_UPDATE" | "CHANNEL_DELETE";
     data: ChannelRecord;
@@ -121,6 +101,7 @@ export type DiscordAction = {
     type: "PRESENCE_UPDATE";
     data: {
         user: UserRecord;
+        guild?: GuildRecord;
         roles?: RoleRecord[];
     } & Presence;
 } | {

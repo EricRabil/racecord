@@ -1,5 +1,5 @@
 export interface Presence {
-    game?: {
+    game: {
         name: string;
         type: number;
         url?: string | null;
@@ -21,7 +21,7 @@ export interface Presence {
             small_text?: string;
         };
     };
-    status?: "idle" | "dnd" | "online" | "offline";
-    since?: number;
-    afk?: boolean;
+    status: "idle" | "dnd" | "online" | "offline";
+    since: number;
+    afk: boolean;
 }

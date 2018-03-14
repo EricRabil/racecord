@@ -2,9 +2,9 @@ import { Store } from "../types/structures/store";
 import { GuildMemberRecord } from "../records/GuildMemberRecord";
 import { RawGuildMember } from "../types/raw/RawGuildMember";
 import { StoreManager } from "../util/StoreManager";
-import { GuildStore, UserStore } from "./index";
+import { GuildStore, UserStore, RoleStore } from "./index";
 import { ActionTypes, ActionType } from "../types/structures/action";
-import { GuildMemberAddPayload } from "../util/gateway/GatewayEvents";
+import { GuildMemberAddPayload, PresenceUpdatePayload } from "../util/gateway/GatewayEvents";
 import { GuildRecord } from "../records/GuildRecord";
 import { RawGuild, RawGuildSelector } from "../types/raw/RawGuild";
 import { PublicDispatcher } from "../util/Dispatcher";
@@ -12,6 +12,8 @@ import { getEntity } from "../util/HTTPUtils";
 import { Endpoints } from "../util/Constants";
 import { Pending } from "../helpers/Pending";
 import { addOrMergeUser } from "./UserStore";
+import { getRoles } from "./RoleStore";
+import { Presence } from "../types/discord/user/presence";
 
 const guildMembers: Map<string, Map<string, GuildMemberRecord>> = new Map();
 const waiter: Pending<GuildMemberRecord> = new Pending();
@@ -160,6 +162,26 @@ function bulkMemberIntake(members: RawGuildMember[], guild?: string) {
     }
 }
 
+async function handlePresenceUpdate(action: PresenceUpdatePayload) {
+    const {guild_id, roles} = action.d;
+    const {id} = action.d.user;
+    if (!guild_id || !roles) {
+        return;
+    }
+    const member = (await GuildMemberStore.findOrCreate(id, guild_id)) as GuildMemberRecord;
+    const guild = (await GuildStore.findOrCreate(guild_id)) as GuildRecord;
+    member.roles = roles;
+    PublicDispatcher.dispatch({
+        type: ActionTypes.PRESENCE_UPDATE,
+        data: {
+            user: member.user,
+            roles: await getRoles(roles, guild_id),
+            guild,
+            ...(member.user.presence as Presence)
+        }
+    });
+}
+
 StoreManager.register(GuildMemberStore, action => {
     switch (action.type) {
         case ActionTypes.GUILD_MEMBER_ADD:
@@ -174,6 +196,11 @@ StoreManager.register(GuildMemberStore, action => {
             break;
         case ActionTypes.GUILD_MEMBERS_CHUNK:
             bulkMemberIntake(action.data.members, action.data.guild_id);
+            break;
+        case ActionTypes.PRESENCE_UPDATE:
+            handlePresenceUpdate(action.payload as any);
+            break;
+        default:
             break;
     }
 })

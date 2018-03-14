@@ -10,6 +10,9 @@ import { Endpoints } from "../util/Constants";
 import { Pending } from "../helpers/Pending";
 import { SelfUser } from "../classes/SelfUser";
 import { PublicDispatcher } from "../util/Dispatcher";
+import { getRoles } from "./RoleStore";
+import { GuildStore } from ".";
+import { Presence } from "../types/discord/user/presence";
 
 const users: Map<string, UserRecord> = new Map();
 let currentUserId: string;
@@ -77,6 +80,42 @@ export function addOrMergeUser(user: RawUser, dispatchUpdate: boolean = false): 
     return userRecord;
 }
 
+async function handlePresenceUpdate(update: PresenceUpdatePayload) {
+    const {afk, game, since, status} = update.d;
+    if (typeof afk === "undefined" && typeof game === "undefined" && typeof since === "undefined" && typeof status === "undefined") {
+        return;
+    }
+    const {id} = update.d.user;
+    const user = (await UserStore.findOrCreate(id)) as UserRecord;
+    if (!user.presence) {
+        user.presence = {
+            game,
+            status,
+            since,
+            afk
+        };
+    } else {
+        user.presence.afk = typeof afk === "undefined" ? user.presence.afk : afk;
+        user.presence.game = typeof game === "undefined" ? user.presence.game : game;
+        user.presence.since = typeof since === "undefined" ? user.presence.since : since;
+        user.presence.status = typeof status === "undefined" ? user.presence.status : status;
+    }
+}
+
+async function dispatchPresenceUpdate(update: PresenceUpdatePayload) {
+    const guild = update.d.guild_id ? await GuildStore.findOrCreate(update.d.guild_id) : undefined;
+    const user = (await UserStore.findOrCreate(update.d.user.id)) as UserRecord;
+    PublicDispatcher.dispatch({
+        type: ActionTypes.PRESENCE_UPDATE,
+        data: {
+            user,
+            roles: guild ? await getRoles(update.d.roles || [], guild.id) : undefined,
+            guild,
+            ...(user.presence as Presence)
+        }
+    });
+}
+
 StoreManager.register(UserStore, action => {
     switch (action.type) {
         case ActionTypes.READY:
@@ -101,6 +140,12 @@ StoreManager.register(UserStore, action => {
             break;
         case ActionTypes.USER_UPDATE:
             addOrMergeUser(action.data);
+            break;
+        case ActionTypes.PRESENCE_UPDATE:
+            handlePresenceUpdate(action.data);
+            dispatchPresenceUpdate(action.data);
+            break;
+        default:
             break;
     }
 });

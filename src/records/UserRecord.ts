@@ -4,6 +4,7 @@ import { DMChannel } from "../classes/channel";
 import { createDirectMessage } from "../util/rest/actions/UserActions";
 import { ChannelStore, UserStore } from "../stores";
 import { Endpoints } from "../util/Constants";
+import { Presence } from "../types/discord/user/presence";
 
 export class UserRecord extends Record implements RawUser {
 
@@ -17,6 +18,7 @@ export class UserRecord extends Record implements RawUser {
     email?: string | undefined;
 
     dmChannel?: DMChannel;
+    presence?: Presence;
 
     public constructor(data: RawUser) {
         super();

@@ -52,6 +52,18 @@ export async function recursiveRoleLookup(roleID: string): Promise<RoleRecord | 
     }
 }
 
+export async function getRoles(roles: string[], guild_id: string): Promise<RoleRecord[]> {
+    const roleRecords: RoleRecord[] = [];
+    for (const roleID of roles) {
+        const role = await RoleStore.findOrCreate(roleID, guild_id);
+        if (!role) {
+            continue;
+        }
+        roleRecords.push(role);
+    }
+    return roleRecords;
+}
+
 function getOrCreateSection(id: string): Map<string, RoleRecord> {
     let section: Map<string, RoleRecord> | undefined = roles.get(id);
     if (section) {

@@ -169,17 +169,10 @@ async function handlePresenceUpdate(action: PresenceUpdatePayload) {
         return;
     }
     const member = (await GuildMemberStore.findOrCreate(id, guild_id)) as GuildMemberRecord;
-    const guild = (await GuildStore.findOrCreate(guild_id)) as GuildRecord;
+    if (!member) {
+        return;
+    }
     member.roles = roles;
-    PublicDispatcher.dispatch({
-        type: ActionTypes.PRESENCE_UPDATE,
-        data: {
-            user: member.user,
-            roles: await getRoles(roles, guild_id),
-            guild,
-            ...(member.user.presence as Presence)
-        }
-    });
 }
 
 StoreManager.register(GuildMemberStore, action => {

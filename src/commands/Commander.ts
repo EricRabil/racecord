@@ -81,7 +81,7 @@ export class Commander {
         if (!message.content.startsWith(this.prefix)) {
             return;
         }
-        const res = message.content.substring(this.prefix.length).match(/\w+|"[^"]*"/g);
+        const res = message.content.substring(this.prefix.length).match(/[^\s]+|"[^"]*"/g);
         if (res === null) {
             return;
         }

@@ -29,7 +29,7 @@ const pingCommand = CommandBuilder.name("ping").handler(e => {
     const preEdit = Date.now();
     e.reply(pongText).then(newMessage => {
         const editedTimestamp = new Date(newMessage.timestamp).getTime();
-        const editedTime = preEdit - editedTimestamp;
+        const editedTime = editedTimestamp - preEdit;
         pongText = pongText.substring(0, pongText.indexOf("plox")) + `${editedTime}ms\``;
         newMessage.edit({content: pongText});
     });
@@ -71,5 +71,5 @@ const evalCommand = CommandBuilder.name("eval").handler(async e => {
         e.reply(`\`\`\`js\n${result}\`\`\``);
     }
 }).use(racecord.commands.guards.UserGuard(["163024083364216832"]));
-commander.use(racecord.commands.middleware.ArgumentParser());
+// commander.use(racecord.commands.middleware.ArgumentParser());
 commander.register([pingCommand, ping2Command, evalCommand, argumentedCommand]);

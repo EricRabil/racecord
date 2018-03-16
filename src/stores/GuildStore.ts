@@ -2,13 +2,15 @@ import { Store } from "../types/structures/store";
 import { StoreManager } from "../util/StoreManager";
 import { ActionTypes, Action } from "../types/structures/action";
 import { GuildRecord } from "../records/GuildRecord";
-import { GuildCreatePayload, GuildDeletePayload, GuildUpdatePayload } from "../util/gateway/GatewayEvents";
+import { GuildCreatePayload, GuildDeletePayload, GuildUpdatePayload, PresenceUpdatePayload } from "../util/gateway/GatewayEvents";
 import { Analytics } from "../util/Analytics";
 import { RawGuild } from "../types/raw/RawGuild";
 import { PublicDispatcher } from "../util/Dispatcher";
 import { getEntity } from "../util/HTTPUtils";
 import { Endpoints } from "../util/Constants";
 import { Pending } from "../helpers/Pending";
+import { GuildMemberStore } from ".";
+import { GuildMemberRecord } from "../records";
 
 const guilds: Map<string, GuildRecord> = new Map();
 const waiter: Pending<GuildRecord> = new Pending();
@@ -80,6 +82,8 @@ StoreManager.register(GuildStore, action => {
             break;
         case ActionTypes.GUILD_UPDATE:
             handleGuildUpdate(action.payload as any);
+            break;
+        default:
             break;
     }
 });

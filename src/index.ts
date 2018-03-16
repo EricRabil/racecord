@@ -10,7 +10,7 @@ import { GuildChannel } from './classes/channel/GuildChannel';
 import { DMChannel, DMGroupChannel } from './classes/channel/DMChannel';
 import { ChannelCategory } from './classes/channel/ChannelCategory';
 import { Dispatcher, RacecordDispatcher, PublicDispatcher } from "./util/Dispatcher";
-import { ActionTypes } from "./types/structures/action";
+import { ActionTypes, BaseAction } from "./types/structures/action";
 import { StoreManager, StoreTracker } from "./util/StoreManager";
 import * as MiscUtils from './util/MiscUtils';
 import * as HTTPUtils from './util/HTTPUtils';
@@ -44,6 +44,7 @@ import * as EmojiActions from './util/rest/actions/EmojiActions';
 import * as Guards from "./commands/guards";
 import * as Middleware from "./commands/middleware";
 import { SelfUser } from './classes/SelfUser';
+import { Presence } from './types/discord/user/presence';
 
 Dispatcher.register(action => {
     if (action.type === ActionTypes.DEBUG) {

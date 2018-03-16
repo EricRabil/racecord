@@ -142,8 +142,8 @@ StoreManager.register(UserStore, action => {
             addOrMergeUser(action.data);
             break;
         case ActionTypes.PRESENCE_UPDATE:
-            handlePresenceUpdate(action.data);
-            dispatchPresenceUpdate(action.data);
+            handlePresenceUpdate(action.payload as any);
+            dispatchPresenceUpdate(action.payload as any);
             break;
         default:
             break;
